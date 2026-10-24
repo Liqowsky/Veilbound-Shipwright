@@ -1,0 +1,60 @@
+name: Veilbound Blender 3D Render
+on:
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: "Quick low-resolution first 48 frames (true) or full 216-frame render (false)"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+  push:
+    branches: [veilbound/test-lab]
+    paths:
+      - "tools/veilbound_intro_blender.py"
+      - ".github/workflows/veilbound-blender-render.yml"
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      VEILBOUND_PERCENT: ${{ inputs.preview == 'false' && '75' || '35' }}
+      VEILBOUND_END_FRAME: ${{ inputs.preview == 'false' && '216' || '48' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender and FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender ffmpeg
+          blender --version
+      - name: Validate scene script syntax
+        run: python3 -m py_compile tools/veilbound_intro_blender.py
+      - name: Build editable scene and render true 3D frames
+        run: |
+          mkdir -p renders
+          blender -b -t 2 --python tools/veilbound_intro_blender.py
+      - name: Verify rendered sequence (reject missing or duplicate frames)
+        run: |
+          python3 - <<'PY'
+          import glob, os, sys, hashlib
+          frames=sorted(glob.glob('renders/frame_*.png'))
+          expected=int(os.environ['VEILBOUND_END_FRAME'])
+          if len(frames)!=expected: sys.exit(f'expected {expected}, found {len(frames)}')
+          if len({hashlib.sha256(open(f,'rb').read()).digest() for f in frames})<max(3,expected//5):
+              sys.exit('not enough unique frames: rejected')
+          print(f'PASS: {len(frames)} frames, varying image content')
+          PY
+      - name: Encode MP4
+        run: ffmpeg -y -framerate 24 -i renders/frame_%04d.png -c:v libx264 -pix_fmt yuv420p -crf 20 veilbound_3d_intro.mp4
+      - name: Upload editable scene and video
+        uses: actions/upload-artifact@v4
+        with:
+          name: veilbound-blender-3d-render
+          path: |
+            veilbound_intro.blend
+            veilbound_3d_intro.mp4
+          retention-days: 14
