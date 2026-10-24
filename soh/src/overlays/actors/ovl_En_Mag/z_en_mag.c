@@ -604,10 +604,8 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             s32 y0 = 167;
             s32 y1 = 212;
             s32 studioAlpha = alpha * 3 / 4;
-            s32 plaqueAlpha = promptAlpha;
             promptAlpha = 160 + pulse * 2;
             if (promptAlpha > 250) promptAlpha = 250;
-            plaqueAlpha = promptAlpha;
             gDPPipeSync(gfx++);
             gDPSetCycleType(gfx++, G_CYC_FILL);
             gDPSetFillColor(gfx++, (GPACK_RGBA5551(20, 31, 27, 1) << 16) | GPACK_RGBA5551(20, 31, 27, 1));
@@ -628,7 +626,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
             gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-            gDPSetPrimColor(gfx++, 0, 0, 215, 191, 119, plaqueAlpha);
+            gDPSetPrimColor(gfx++, 0, 0, 215, 191, 119, promptAlpha);
             x = 117;
             for (n = 0; prompt[n] != 0; ++n) {
                 if (prompt[n] != ' ') {
