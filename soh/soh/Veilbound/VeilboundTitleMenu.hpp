@@ -92,3 +92,38 @@ inline TitleAction DrawTitleMenu(bool hasSave) {
     return action;
 }
 } // namespace Veilbound
+
+#include <ship/window/gui/GuiWindow.h>
+namespace Veilbound {
+// Bridge into Shipwright's actual GuiWindow rendering lifecycle.
+class TitleWindow final : public Ship::GuiWindow {
+  public:
+    using GuiWindow::GuiWindow;
+    void InitElement() override {}
+    void UpdateElement() override {}
+    void DrawElement() override {}
+    void Draw() override {
+        const TitleAction action = DrawTitleMenu(false);
+        if (action == TitleAction::NewGame || action == TitleAction::Continue) {
+            Hide(); // Prototype: yield back to existing Shipwright title/flow.
+        } else if (action == TitleAction::Settings) {
+            showSettings = !showSettings;
+        } else if (action == TitleAction::Credits) {
+            showCredits = !showCredits;
+        }
+        if (showSettings) {
+            ImGui::Begin("VEILBOUND SETTINGS", &showSettings);
+            ImGui::TextUnformatted("Experimental UI. Game options not connected yet.");
+            ImGui::End();
+        }
+        if (showCredits) {
+            ImGui::Begin("VEILBOUND CREDITS", &showCredits);
+            ImGui::TextUnformatted("Veilbound - original independent RPG experiment");
+            ImGui::End();
+        }
+    }
+  private:
+    bool showSettings = false;
+    bool showCredits = false;
+};
+} // namespace Veilbound
