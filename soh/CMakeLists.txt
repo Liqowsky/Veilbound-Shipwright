@@ -302,6 +302,16 @@ set(SDL2-INCLUDE ${SDL2_INCLUDE_DIRS})
 
 find_package(SDL2_net)
 
+# Ubuntu's libsdl2-net-dev can be discovered by FindSDL2_net without
+# exporting the namespaced SDL2_net::SDL2_net target expected below.
+# Supply the imported target from the actual installed library.
+if(NOT TARGET SDL2_net::SDL2_net AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_library(VEILBOUND_SDL2_NET_LIBRARY NAMES SDL2_net REQUIRED)
+    add_library(SDL2_net::SDL2_net UNKNOWN IMPORTED)
+    set_target_properties(SDL2_net::SDL2_net PROPERTIES
+        IMPORTED_LOCATION "${VEILBOUND_SDL2_NET_LIBRARY}")
+endif()
+
 if(NOT SDL2_net_FOUND)
     message(STATUS "SDL2_net not found (it's possible the version installed is too old).")
 else()
