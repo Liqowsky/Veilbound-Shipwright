@@ -532,60 +532,78 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
     gSPSegment(gfx++, 0x06, play->objectCtx.status[this->actor.objBankIndex].segment);
 
     Gfx_SetupDL_39Ptr(&gfx);
-    // VEILBOUND: calm native title, original OoT title actor (NOT an ImGui overlay).
-    // This is a safe native fallback until the approved PNG is imported as a texture asset.
-    // Do not draw placeholder medals, fake links or temporary geometric wordmarks.
+    // VEILBOUND native title. The approved logo comes from the external .o2r texture override.
+    // Preserve the game's background and input transitions, without the old OoT flame/subtitles.
     {
         static s32 veilboundFrame = 0;
-        const char* title = "VEILBOUND";
-        const char* startText = "PRESS START";
-        s32 i;
-        s32 x;
+        const char* prompt = "PRESS START";
+        const char* studio = "ANEK STUDIOS";
         s32 alpha;
-        s32 glowAlpha;
-        s32 shimmer;
+        s32 pulse;
+        s32 promptAlpha;
+        s32 x;
+        s32 n;
         if (veilboundFrame < 10000) {
             veilboundFrame++;
         }
-        alpha = (veilboundFrame - 22) * 7;
+        alpha = (veilboundFrame - 18) * 7;
         if (alpha < 0) alpha = 0;
         if (alpha > 255) alpha = 255;
-        shimmer = (veilboundFrame / 2) % 80;
-        glowAlpha = alpha * (64 + (shimmer < 40 ? shimmer : 80 - shimmer)) / 255;
+        pulse = (veilboundFrame / 2) % 90;
+        if (pulse > 45) pulse = 90 - pulse;
 
-        gDPPipeSync(gfx++);
-        gDPSetCycleType(gfx++, G_CYC_FILL);
-        gDPSetFillColor(gfx++, (GPACK_RGBA5551(6, 14, 22, 1) << 16) | GPACK_RGBA5551(6, 14, 22, 1));
-        gDPFillRectangle(gfx++, 0, 0, 319, 239);
+        // The halo is sourced from the exact same logo silhouette (alpha), not a rectangular flame.
+        // Draw the logo only once; the green magic is part of the approved transparent artwork.
         Gfx_SetupDL_39Ptr(&gfx);
         gDPPipeSync(gfx++);
-        gDPSetCycleType(gfx++, G_CYC_1CYCLE);
         gDPSetAlphaCompare(gfx++, G_AC_NONE);
         gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-
-        // Draw the real, approved VEILBOUND artwork from the texture mod.
-        // The replacement .o2r overrides gTitleZeldaShieldLogoTex (and its MQ variant).
-        // Keep the existing native title animation state / input handling intact.
-        gDPPipeSync(gfx++);
         gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
         if (alpha > 0) {
-            EnMag_DrawImageRGBA32(&gfx, 160, 106, (u8*)LOGO_TEX, 160, 160);
+            EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
-        if (veilboundFrame > 85 && ((veilboundFrame / 25) & 1) == 0) {
+        // Emerald fantasy-style PRESS START with gentle breathing (no hard blink).
+        if (veilboundFrame > 90) {
+            promptAlpha = 100 + pulse * 3;
+            if (promptAlpha > 235) promptAlpha = 235;
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 128, 236, 185, 220);
-            x = 115;
-            for (i = 0; startText[i] != 0; ++i) {
-                if (startText[i] != ' ') {
+            gDPSetPrimColor(gfx++, 0, 0, 17, 110, 78, promptAlpha / 2);
+            x = 117;
+            for (n = 0; prompt[n] != 0; ++n) {
+                if (prompt[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (startText[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 180);
+                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x + 1, 174 + 1);
                 }
                 x += 8;
             }
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 200, 244, 221, promptAlpha);
+            x = 117;
+            for (n = 0; prompt[n] != 0; ++n) {
+                if (prompt[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x, 174);
+                }
+                x += 8;
+            }
+        }
+
+        // AneK Studios is an original studio credit, not a replacement claim over OoT ownership.
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 0, 156, 203, 177, alpha * 3 / 4);
+        x = 111;
+        for (n = 0; studio[n] != 0; ++n) {
+            if (studio[n] != ' ') {
+                EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                    (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                    x, 210);
+            }
+            x += 8;
         }
     }
     *gfxP = gfx;
