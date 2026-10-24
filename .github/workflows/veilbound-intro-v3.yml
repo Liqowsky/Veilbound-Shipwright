@@ -1,0 +1,51 @@
+name: Veilbound 3D Intro v3
+on:
+  push:
+    branches: [veilbound/test-lab]
+    paths:
+      - tools/veilbound_intro_v3.py
+      - .github/workflows/veilbound-intro-v3.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      VB_FRAMES: "216"
+      VB_PERCENT: "55"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender ffmpeg libegl1 libgl1 libgles2 libopengl0 libxrender1 libxi6 libxkbcommon0 libsm6 libxext6 libx11-6 libgl1-mesa-dri mesa-utils
+          ldconfig -p | grep libEGL.so.1
+          blender --version
+      - name: Check script syntax
+        run: python3 -m py_compile tools/veilbound_intro_v3.py
+      - name: Render all frames with Blender
+        run: |
+          mkdir -p renders
+          blender -b -t 2 --python tools/veilbound_intro_v3.py
+      - name: Validate video frames
+        run: |
+          python3 - <<'PY'
+          import glob,hashlib,os,sys
+          frames=sorted(glob.glob('renders/frame_*.png'))
+          if len(frames)!=216: sys.exit('Expected 216 frames, found '+str(len(frames)))
+          unique={hashlib.sha256(open(p,'rb').read()).digest() for p in frames}
+          if len(unique)<70:sys.exit('FAIL: not enough unique frames: '+str(len(unique)))
+          print('PASS: 216 true rendered frames,',len(unique),'unique')
+          PY
+      - name: Encode H264 MP4
+        run: ffmpeg -y -framerate 24 -i renders/frame_%04d.png -c:v libx264 -pix_fmt yuv420p -crf 18 veilbound_intro_v3.mp4
+      - name: Upload MP4 and editable scene
+        uses: actions/upload-artifact@v4
+        with:
+          name: veilbound-3d-intro-v3
+          path: |
+            veilbound_intro_v3.mp4
+            veilbound_3d_v3.blend
+          retention-days: 14
