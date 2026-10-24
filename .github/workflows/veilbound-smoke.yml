@@ -1,0 +1,30 @@
+name: Veilbound Shipwright smoke test
+on:
+  push:
+    branches:
+      - veilbound/prologue-experiment
+  workflow_dispatch:
+
+jobs:
+  source-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Validate menu integration and dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f soh/soh/Veilbound/VeilboundTitleMenu.hpp
+          grep -q '#include "soh/Veilbound/VeilboundTitleMenu.hpp"' soh/soh/SohGui/SohGui.cpp
+          grep -q 'gui->AddGuiWindow(mVeilboundTitleWindow)' soh/soh/SohGui/SohGui.cpp
+          grep -q 'void Draw() override' soh/soh/Veilbound/VeilboundTitleMenu.hpp
+          test -f libultraship/CMakeLists.txt
+          echo "Menu wired. Compilability is NOT established by source check."
+      - name: Configure CMake to check dependency toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y $(cat linux-build-deps/apt.txt)
+          cmake -S . -B build-smoke -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSOH_TOOLS_ONLY=ON
