@@ -1,0 +1,28 @@
+name: Veilbound Native Test Lab
+on:
+  push:
+    branches:
+      - veilbound/test-lab
+  pull_request:
+    branches:
+      - veilbound/prologue-experiment
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-title-source-guard:
+    name: Native title integration guard (source only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python script syntax
+        run: python3 -m py_compile tests/veilbound_title_guard.py
+      - name: Check native title actor integration
+        run: python3 tests/veilbound_title_guard.py
+      - name: Explain scope
+        run: |
+          echo "This job checks source integration only."
+          echo "It does NOT build an Android APK, run a game, validate assets, or verify title pixels."
