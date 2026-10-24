@@ -48,6 +48,16 @@ jobs:
           if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
           printf 'y\\n' | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" --install "platforms;android-31" "build-tools;35.0.0" "ndk;26.0.10792818" "cmake;3.31.5"
+      - name: Fix Android SDK and NDK paths for Gradle
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDKROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          NDKROOT="$SDKROOT/ndk/26.0.10792818"
+          test -f "$NDKROOT/source.properties"
+          test -d "$SDKROOT/platforms/android-31"
+          printf 'sdk.dir=%s\\nndk.dir=%s\\n' "$SDKROOT" "$NDKROOT" > android-port/Android/local.properties
+          cat android-port/Android/local.properties
       - name: Install Linux build prerequisites
         run: |
           sudo apt-get update
