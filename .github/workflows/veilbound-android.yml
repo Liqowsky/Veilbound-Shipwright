@@ -54,9 +54,30 @@ jobs:
           sudo apt-get install -y ninja-build cmake pkg-config libgl1-mesa-dev libglu1-mesa-dev libusb-1.0-0-dev libpng-dev libzip-dev libogg-dev libvorbis-dev libopus-dev
       - name: Build VEILBOUND standalone debug APK
         working-directory: android-port/Android
+        shell: bash
         run: |
+          set -o pipefail
           chmod +x ./gradlew
-          ./gradlew :app:assembleDebug --stacktrace --no-daemon -PsohApplicationId=com.anekstudios.veilbound
+          ./gradlew :app:assembleDebug --no-daemon --console plain --warning-mode summary -PsohApplicationId=com.anekstudios.veilbound 2>&1 | tee "$GITHUB_WORKSPACE/veilbound-android-gradle.log"
+      - name: Show actual Gradle error summary
+        if: failure()
+        shell: bash
+        run: |
+          echo '=== GRADLE FAILURE DIAGNOSTICS ==='
+          if [ -f veilbound-android-gradle.log ]; then
+            grep -n -A 18 -B 5 -E '^FAILURE:|^\\* What went wrong:|^\\* Where:|^> |^Caused by:|^Could not|^Execution failed|^e: |^CMake Error|^error:|^ERROR:' veilbound-android-gradle.log | tail -n 200 || true
+            echo '=== LOG TAIL ==='
+            tail -n 100 veilbound-android-gradle.log
+          else
+            echo 'Gradle log missing; the job failed before Gradle completed.'
+          fi
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VEILBOUND-Android-BUILD-ERROR-LOG
+          path: veilbound-android-gradle.log
+          if-no-files-found: warn
       - name: Validate APK output
         run: |
           find android-port/Android/app/build/outputs/apk/debug -type f -name '*.apk' -print
