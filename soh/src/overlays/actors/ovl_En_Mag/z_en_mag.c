@@ -565,6 +565,36 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
+        // VEILBOUND: gilded subtitle replaces Ocarina of Time (no legacy title overlays).
+        // Draw two gold passes for a restrained embossed/shadowed appearance.
+        if (veilboundFrame > 48) {
+            const char* subtitle = "ECHOES OF THE FIRST RIFT";
+            s32 subtitleAlpha = (veilboundFrame - 48) * 8;
+            if (subtitleAlpha > 240) subtitleAlpha = 240;
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 75, 43, 13, subtitleAlpha / 2);
+            x = 82;
+            for (n = 0; subtitle[n] != 0; ++n) {
+                if (subtitle[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (subtitle[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x + 1, 156 + 1);
+                }
+                x += 6;
+            }
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 234, 197, 105, subtitleAlpha);
+            x = 82;
+            for (n = 0; subtitle[n] != 0; ++n) {
+                if (subtitle[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (subtitle[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x, 156);
+                }
+                x += 6;
+            }
+        }
+
         // Emerald fantasy-style PRESS START with gentle breathing (no hard blink).
         if (veilboundFrame > 90) {
             promptAlpha = 100 + pulse * 3;
