@@ -42,8 +42,8 @@ jobs:
           required = [
               ('#include "SohGui.hpp"', '#include "SohGui.hpp"\n#include "soh/Veilbound/VeilboundTitleMenu.hpp"'),
               ('std::shared_ptr<Ship::GuiWindow> mConsoleWindow;', 'std::shared_ptr<Veilbound::TitleWindow> mVeilboundTitleWindow;\nstd::shared_ptr<Ship::GuiWindow> mConsoleWindow;'),
-              ('void SetupGuiElements() {\n    auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();',
-               'void SetupGuiElements() {\n    auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();\n'
+              ('void SetupGuiElements() {\n    auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();',
+               'void SetupGuiElements() {\n    auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();\n'
                '    mVeilboundTitleWindow = std::make_shared<Veilbound::TitleWindow>(\n'
                '        CVAR_WINDOW("VeilboundTitle"), "Veilbound Title");\n'
                '    gui->AddGuiWindow(mVeilboundTitleWindow);\n'
