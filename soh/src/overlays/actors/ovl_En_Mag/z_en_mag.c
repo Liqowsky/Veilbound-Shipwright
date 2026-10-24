@@ -595,45 +595,60 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             }
         }
 
-        // Emerald fantasy-style PRESS START with gentle breathing (no hard blink).
-        if (veilboundFrame > 90) {
-            promptAlpha = 100 + pulse * 3;
-            if (promptAlpha > 235) promptAlpha = 235;
+        // VEILBOUND: one engraved bronze-and-emerald plaque for the start action.
+        // This replaces both the original red prompt and the detached studio credit.
+        // Uses native RDP primitives and the title font, without requiring an Android APK.
+        if (veilboundFrame > 85) {
+            s32 x0 = 91;
+            s32 x1 = 229;
+            s32 y0 = 167;
+            s32 y1 = 212;
+            s32 studioAlpha = alpha * 3 / 4;
+            s32 plaqueAlpha = promptAlpha;
+            promptAlpha = 160 + pulse * 2;
+            if (promptAlpha > 250) promptAlpha = 250;
+            plaqueAlpha = promptAlpha;
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 17, 110, 78, promptAlpha / 2);
-            x = 117;
-            for (n = 0; prompt[n] != 0; ++n) {
-                if (prompt[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x + 1, 174 + 1);
-                }
-                x += 8;
-            }
-            gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 200, 244, 221, promptAlpha);
-            x = 117;
-            for (n = 0; prompt[n] != 0; ++n) {
-                if (prompt[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 174);
-                }
-                x += 8;
-            }
-        }
+            gDPSetCycleType(gfx++, G_CYC_FILL);
+            gDPSetFillColor(gfx++, (GPACK_RGBA5551(20, 31, 27, 1) << 16) | GPACK_RGBA5551(20, 31, 27, 1));
+            gDPFillRectangle(gfx++, x0, y0, x1, y1);
+            gDPSetFillColor(gfx++, (GPACK_RGBA5551(141, 103, 49, 1) << 16) | GPACK_RGBA5551(141, 103, 49, 1));
+            gDPFillRectangle(gfx++, x0 + 1, y0 + 1, x1 - 1, y0 + 3);
+            gDPFillRectangle(gfx++, x0 + 1, y1 - 3, x1 - 1, y1 - 1);
+            gDPFillRectangle(gfx++, x0 + 1, y0 + 1, x0 + 3, y1 - 1);
+            gDPFillRectangle(gfx++, x1 - 3, y0 + 1, x1 - 1, y1 - 1);
+            gDPSetFillColor(gfx++, (GPACK_RGBA5551(11, 92, 63, 1) << 16) | GPACK_RGBA5551(11, 92, 63, 1));
+            gDPFillRectangle(gfx++, x0 + 6, y0 + 6, x1 - 6, y0 + 7);
+            gDPFillRectangle(gfx++, x0 + 6, y1 - 7, x1 - 6, y1 - 6);
 
-        // AneK Studios is an original studio credit, not a replacement claim over OoT ownership.
-        gDPPipeSync(gfx++);
-        gDPSetPrimColor(gfx++, 0, 0, 156, 203, 177, alpha * 3 / 4);
-        x = 111;
-        for (n = 0; studio[n] != 0; ++n) {
-            if (studio[n] != ' ') {
-                EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                    (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                    x, 210);
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetCycleType(gfx++, G_CYC_1CYCLE);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            gDPSetPrimColor(gfx++, 0, 0, 215, 191, 119, plaqueAlpha);
+            x = 117;
+            for (n = 0; prompt[n] != 0; ++n) {
+                if (prompt[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x, 176);
+                }
+                x += 8;
             }
-            x += 8;
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 137, 204, 158, studioAlpha);
+            x = 111;
+            for (n = 0; studio[n] != 0; ++n) {
+                if (studio[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x, 198);
+                }
+                x += 8;
+            }
         }
     }
     *gfxP = gfx;
