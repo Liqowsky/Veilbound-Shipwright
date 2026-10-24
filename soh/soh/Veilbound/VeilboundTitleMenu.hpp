@@ -103,6 +103,11 @@ inline void DrawSilverMedallion(const ImVec2& center, float t, float r) {
 
 // Call once per frame inside an existing ImGui frame. Navigation actions are
 // returned to the host so no OoT save state is modified until adapters exist.
+inline float IntroEase(float v) {
+    v = v < 0.f ? 0.f : (v > 1.f ? 1.f : v);
+    return v*v*(3.f-2.f*v);
+}
+
 inline TitleAction DrawTitleMenu(bool hasSave) {
     const ImGuiViewport* vp = ImGui::GetMainViewport();
     const float scale = (vp->Size.x / 1280.0f < vp->Size.y / 720.0f)
@@ -117,10 +122,30 @@ inline TitleAction DrawTitleMenu(bool hasSave) {
     TitleAction action = TitleAction::None;
     if (ImGui::Begin("##VeilboundTitle", nullptr, flags)) {
         ImVec2 area = ImGui::GetContentRegionAvail();
-        DrawKingdomBackdrop(ImGui::GetWindowPos(), vp->Size, static_cast<float>(ImGui::GetTime()));
+        const float introTime = static_cast<float>(ImGui::GetTime());
+        DrawKingdomBackdrop(ImGui::GetWindowPos(), vp->Size, introTime);
+        const float fly = IntroEase(introTime / 1.30f);
+        const float medallionScale = .35f + .65f*fly;
+        const float medallionOffset = (1.f-fly)*(-vp->Size.y*.53f);
+        const float beat1 = std::exp(-std::pow((introTime-1.58f)/.11f,2.f));
+        const float beat2 = std::exp(-std::pow((introTime-2.05f)/.11f,2.f));
+        const float beat = .13f*beat1+.17f*beat2;
+        const float smoke = IntroEase((introTime-2.05f)/1.65f);
+        const ImVec2 winPos = ImGui::GetWindowPos();
+        const ImVec2 center(winPos.x + vp->Size.x*.5f, winPos.y + vp->Size.y*.15f + 82.f*s + medallionOffset);
+        if (introTime > 2.1f && introTime < 4.5f) {
+            auto* draw = ImGui::GetWindowDrawList();
+            for(int i=0;i<20;++i){
+                float a = introTime*1.2f+i*.314159f;
+                float radius = (50.f+smoke*330.f+i*2.f)*s;
+                ImVec2 point(center.x+std::cos(a)*radius,center.y+std::sin(a)*radius*.38f+smoke*75.f*s);
+                draw->AddCircleFilled(point,(8.f+smoke*14.f)*s,
+                    IM_COL32(40,175,110,static_cast<int>(50.f*(1.f-smoke*.65f))),18);
+            }
+        }
         float mid = ImGui::GetWindowPos().x + area.x * .5f;
         float top = ImGui::GetWindowPos().y + area.y * .15f;
-        DrawSilverMedallion(ImVec2(mid, top + 82*s), static_cast<float>(ImGui::GetTime()), 58*s);
+        DrawSilverMedallion(center, introTime, 58*s*(medallionScale+beat));
         ImGui::SetCursorPosY(area.y * .42f);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8*s);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(14*s, 8*s));
@@ -132,8 +157,9 @@ inline TitleAction DrawTitleMenu(bool hasSave) {
             ImGui::SetCursorPosX((area.x - w) * .5f);
             ImGui::TextUnformatted(text);
         };
+        const bool introRevealed = introTime >= 3.2f;
         ImGui::SetWindowFontScale(2.0f*s);
-        centerText("V E I L B O U N D");
+        if (introRevealed) centerText("V E I L B O U N D");
         ImGui::SetWindowFontScale(1.0f);
         ImGui::Dummy(ImVec2(0, 16*s));
         auto menuButton = [&](const char* title) {
@@ -143,12 +169,12 @@ inline TitleAction DrawTitleMenu(bool hasSave) {
             ImGui::Dummy(ImVec2(0, 3*s));
             return clicked;
         };
-        if (menuButton("NEW GAME")) action = TitleAction::NewGame;
+        if (introTime >= 4.1f && menuButton("NEW GAME")) action = TitleAction::NewGame;
         ImGui::BeginDisabled(!hasSave);
-        if (menuButton("CONTINUE")) action = TitleAction::Continue;
+        if (introTime >= 4.1f && menuButton("CONTINUE")) action = TitleAction::Continue;
         ImGui::EndDisabled();
-        if (menuButton("SETTINGS")) action = TitleAction::Settings;
-        if (menuButton("CREDITS")) action = TitleAction::Credits;
+        if (introTime >= 4.1f && menuButton("SETTINGS")) action = TitleAction::Settings;
+        if (introTime >= 4.1f && menuButton("CREDITS")) action = TitleAction::Credits;
         ImGui::PopStyleColor(3);
         ImGui::PopStyleVar(2);
     }
