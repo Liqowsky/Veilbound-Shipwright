@@ -61,14 +61,36 @@ jobs:
       - name: Install Linux build prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake pkg-config libgl1-mesa-dev libglu1-mesa-dev libusb-1.0-0-dev libpng-dev libzip-dev libogg-dev libvorbis-dev libopus-dev
+          sudo apt-get install -y ccache ninja-build cmake pkg-config libgl1-mesa-dev libglu1-mesa-dev libusb-1.0-0-dev libpng-dev libzip-dev libogg-dev libvorbis-dev libopus-dev
+      - name: Restore native compilation cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: veilbound-android-ccache-v1-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            veilbound-android-ccache-v1-${{ runner.os }}-
+      - name: Configure C/C++ compilation cache
+        shell: bash
+        run: |
+          ccache --set-config=max_size=1G
+          ccache --zero-stats
+          ccache --show-config | grep -E 'cache_dir|max_size' || true
       - name: Build VEILBOUND standalone debug APK
         working-directory: android-port/Android
         shell: bash
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_BUILD_PARALLEL_LEVEL: '2'
+          CCACHE_BASEDIR: ${{ github.workspace }}/android-port
+          CCACHE_COMPILERCHECK: content
         run: |
           set -o pipefail
           chmod +x ./gradlew
           ./gradlew :app:assembleDebug --no-daemon --console plain --warning-mode summary -PsohApplicationId=com.anekstudios.veilbound 2>&1 | tee "$GITHUB_WORKSPACE/veilbound-android-gradle.log"
+      - name: Compiler cache statistics
+        if: always()
+        run: ccache --show-stats || true
       - name: Show actual compiler errors (not the 2400-line ninja task list)
         if: failure()
         shell: bash
