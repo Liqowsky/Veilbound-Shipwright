@@ -31,7 +31,7 @@ green=material('Emerald gemstone',(.05,.9,.3),.3,4.0)
 cloud=material('Clouds',(.5,.63,.77))
 def link(name,location,r=.1):
  bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=8,major_radius=r,minor_radius=.023,location=location)
- o=bpy.context.object;o.name=name;o.data.materials.append(bronze)
+ o=bpy.context.object;o.name=name;o.data.materials.append(bronze);o.scale=(.72,1.25,1)
  for f in o.data.polygons:f.use_smooth=True
  return o
 def key(obj,fr,pos=None,scale=None,rot=None):
@@ -46,7 +46,7 @@ mod=body.modifiers.new('Rounded rim','BEVEL');mod.width=.04;mod.segments=3
 rim=link('Pendant bronze rim',(0,-.12,0),.48);rim.rotation_euler[0]=pi/2;rim.parent=rig
 bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3,radius=.23,location=(0,-.19,0))
 gem=bpy.context.object;gem.name='Glowing emerald';gem.data.materials.append(green);gem.scale=(1,.3,1);gem.parent=rig
-for fr,pos,scale in [(1,(1.7,7,2.3),(.12,)*3),(45,(.8,-.2,1),(.95,)*3),(67,(.8,-.2,1),(1,)*3),(216,(.8,-.2,1),(1,)*3)]:
+for fr,pos,scale in [(1,(0,-.2,1.2),(.12,)*3),(45,(0,-.2,.8),(.95,)*3),(67,(0,-.2,.8),(1,)*3),(216,(.8,-.2,1),(1,)*3)]:
  key(rig,fr,pos,scale)
 for fr,s in [(1,1),(51,1),(56,1.35),(61,1),(69,1),(74,1.42),(79,1),(216,1)]:
  key(gem,fr,scale=(s,.3*s,s))
@@ -54,8 +54,8 @@ for i in range(20):
  o=link('Free moving chain link %02d'%i,(0,0,0))
  for fr in [1,25,48,75,105,140,170,216]:
   t=max(0,min(1,(fr-45)/125));t=t*t*(3-2*t)
-  x=(.8+.17*sin(i*.7+fr*.1))*(1-t)+(-2.5+.18*i+.27*sin(i*.6))*t
-  z=(1.7+.17*i+.20*sin(i*.45+fr*.12))*(1-t)+(-.64+.26*sin(i*.48))*t
+  x=(.17*sin(i*.7+fr*.1))*(1-t)+(-2.5+.18*i+.27*sin(i*.6))*t
+  z=(1.7+.17*i+.20*sin(i*.45+fr*.12))*(1-t)+(.28+.26*sin(i*.48))*t
   key(o,fr,(x,-.23,z),rot=(pi/2 if i%2 else 0,.2*sin(i+fr*.05),.2*sin(i*.6+fr*.04)))
 font=bpy.data.curves.new('VEILBOUND 3D text','FONT')
 font.body='VEILBOUND';font.align_x='CENTER';font.align_y='CENTER'
@@ -64,14 +64,14 @@ word=bpy.data.objects.new('VEILBOUND wordmark',font);sc.collection.objects.link(
 word.data.materials.append(stone);word.location=(0,.10,-.80)
 for fr,s in [(1,.001),(89,.001),(115,.24),(155,.69),(216,.69)]:
  key(word,fr,scale=(s,s,s))
-wave=link('Energy shockwave',(.8,-.3,1),.45);wave.data.materials.clear();wave.data.materials.append(green)
+wave=link('Energy shockwave',(0,-.3,.8),.45);wave.data.materials.clear();wave.data.materials.append(green)
 for fr,s in [(1,.001),(78,.001),(85,.1),(110,7),(126,.001),(216,.001)]:
  key(wave,fr,scale=(s,s,s))
 import random
 random.seed(7)
-for i in range(45):
- bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,location=(random.uniform(-11,11),random.uniform(6,17),random.uniform(-7,4)))
- o=bpy.context.object;o.name='Sky cloud %02d'%i;o.scale=(random.uniform(1,4),random.uniform(.3,.8),random.uniform(.3,.8))
+for i in range(20):
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=16,location=(random.uniform(-12,12),random.uniform(18,25),random.uniform(-6,-3)))
+ o=bpy.context.object;o.name='Sky cloud %02d'%i;o.scale=(random.uniform(.7,1.7),random.uniform(.25,.6),random.uniform(.2,.4))
  o.data.materials.append(cloud)
  p=o.location.copy()
  key(o,1,p)
@@ -79,7 +79,7 @@ for i in range(45):
 bpy.ops.object.camera_add(location=(0,-13,.8))
 camera=bpy.context.object;sc.camera=camera
 camera.rotation_euler=(Vector((0,0,0))-camera.location).to_track_quat('-Z','Y').to_euler()
-camera.data.type='ORTHO';camera.data.ortho_scale=8.8
+camera.data.type='ORTHO';camera.data.ortho_scale=6.5
 def area(name,pos,color,power):
  bpy.ops.object.light_add(type='AREA',location=pos)
  o=bpy.context.object;o.name=name;o.data.energy=power;o.data.color=color;o.data.size=10
