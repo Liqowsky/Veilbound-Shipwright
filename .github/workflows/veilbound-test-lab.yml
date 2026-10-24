@@ -37,6 +37,20 @@ jobs:
         run: cmake -S . -B build-native -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Compile and link native game
         run: cmake --build build-native -j4
+      - name: Package compiled Linux binary for inspection
+        if: success()
+        run: |
+          mkdir -p build-output
+          find build-native -type f -executable ! -name '*.so' ! -name '*.a' -size +1M -exec cp -v {} build-output/ \\; || true
+          find build-output -type f -maxdepth 1 -print
+          test -n "$(find build-output -type f -maxdepth 1 -print -quit)"
+      - name: Upload native test build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: veilbound-native-linux-build
+          path: build-output/
+          if-no-files-found: error
       - name: Record build provenance
         if: always()
         run: |
