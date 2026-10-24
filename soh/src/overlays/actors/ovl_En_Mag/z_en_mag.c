@@ -565,27 +565,13 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
 
-        // Emerald glow: three soft offset passes, then the sharp readable wordmark.
-        for (i = 0; i < 3; i++) {
-            gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 22, 200, 124, glowAlpha / (i + 2));
-            x = 93 + i - 1;
-            for (s32 j = 0; title[j] != 0; ++j) {
-                EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                    (title[j] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                    x, 102 + i - 1);
-                x += 15;
-            }
-        }
-
+        // Draw the real, approved VEILBOUND artwork from the texture mod.
+        // The replacement .o2r overrides gTitleZeldaShieldLogoTex (and its MQ variant).
+        // Keep the existing native title animation state / input handling intact.
         gDPPipeSync(gfx++);
-        gDPSetPrimColor(gfx++, 0, 0, 211, 232, 196, alpha);
-        x = 93;
-        for (i = 0; title[i] != 0; ++i) {
-            EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                (title[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                x, 102);
-            x += 15;
+        gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
+        if (alpha > 0) {
+            EnMag_DrawImageRGBA32(&gfx, 160, 106, (u8*)LOGO_TEX, 160, 160);
         }
 
         if (veilboundFrame > 85 && ((veilboundFrame / 25) & 1) == 0) {
