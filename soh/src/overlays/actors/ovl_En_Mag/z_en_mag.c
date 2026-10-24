@@ -532,123 +532,73 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
     gSPSegment(gfx++, 0x06, play->objectCtx.status[this->actor.objBankIndex].segment);
 
     Gfx_SetupDL_39Ptr(&gfx);
-    // VEILBOUND: native title animation state machine.
-    // Temporary native display-list geometry pending the approved textured logo mesh.
-    // No ImGui layer, movie playback, or separate window.
+    // VEILBOUND: calm native title, original OoT title actor (NOT an ImGui overlay).
+    // This is a safe native fallback until the approved PNG is imported as a texture asset.
+    // Do not draw placeholder medals, fake links or temporary geometric wordmarks.
     {
-        static s32 introFrame = 0;
+        static s32 veilboundFrame = 0;
         const char* title = "VEILBOUND";
         const char* startText = "PRESS START";
-        s32 centerX = 160;
-        s32 centerY = 99;
-        s32 medallionRadius;
-        s32 chainX;
-        s32 chainY;
-        s32 chainI;
-        s32 titleX;
-        s32 titleAlpha;
-        s32 pulse = 0;
-        s32 showPrompt;
-        s32 flash = 0;
-        s32 smoke;
-        s32 smokeI;
-
-        // 0-49: approaching pendant and trailing chain
-        // 50-84: two energy pulses
-        // 85-108: radial burst / magical smoke
-        // 109-159: VEILBOUND letters form from the smoke
-        // 160+: stable title screen with pendant and chain.
-        if (introFrame < 200) {
-            introFrame++;
+        s32 i;
+        s32 x;
+        s32 alpha;
+        s32 glowAlpha;
+        s32 shimmer;
+        if (veilboundFrame < 10000) {
+            veilboundFrame++;
         }
-        medallionRadius = introFrame < 50 ? 3 + introFrame / 4 : 15;
-        if ((introFrame >= 54 && introFrame <= 60) ||
-            (introFrame >= 73 && introFrame <= 79)) {
-            pulse = 5;
-        }
-        if (introFrame >= 85 && introFrame <= 108) {
-            flash = 108 - introFrame;
-        }
-        titleAlpha = introFrame > 109 ? (introFrame - 109) * 6 : 0;
-        if (titleAlpha > 255) {
-            titleAlpha = 255;
-        }
-        showPrompt = introFrame >= 160;
+        alpha = (veilboundFrame - 22) * 7;
+        if (alpha < 0) alpha = 0;
+        if (alpha > 255) alpha = 255;
+        shimmer = (veilboundFrame / 2) % 80;
+        glowAlpha = alpha * (64 + (shimmer < 40 ? shimmer : 80 - shimmer)) / 255;
 
         gDPPipeSync(gfx++);
         gDPSetCycleType(gfx++, G_CYC_FILL);
-        gDPSetFillColor(gfx++, (GPACK_RGBA5551(8, 21, 26, 1) << 16) | GPACK_RGBA5551(8, 21, 26, 1));
+        gDPSetFillColor(gfx++, (GPACK_RGBA5551(6, 14, 22, 1) << 16) | GPACK_RGBA5551(6, 14, 22, 1));
         gDPFillRectangle(gfx++, 0, 0, 319, 239);
-
-        // Pendant and free-flowing chain are independently animated.
-        // Link positions form loose waves rather than a straight hanging line.
-        gDPSetFillColor(gfx++, (GPACK_RGBA5551(149, 149, 125, 1) << 16) |
-                                GPACK_RGBA5551(149, 149, 125, 1));
-        for (chainI = 0; chainI < 15; ++chainI) {
-            chainX = 160 + ((chainI * 29 + introFrame * 2) % 117) - 58;
-            chainY = centerY - medallionRadius - 4 - chainI * 4;
-            if (chainY >= 0 && chainY < 210) {
-                gDPFillRectangle(gfx++, chainX - 2, chainY - 1, chainX + 2, chainY + 1);
-            }
-        }
-
-        // Medallion body, central green heart, and twin heartbeats.
-        gDPSetFillColor(gfx++, (GPACK_RGBA5551(165, 154, 119, 1) << 16) |
-                                GPACK_RGBA5551(165, 154, 119, 1));
-        gDPFillRectangle(gfx++, centerX - medallionRadius, centerY - medallionRadius,
-                         centerX + medallionRadius, centerY + medallionRadius);
-        gDPSetFillColor(gfx++, (GPACK_RGBA5551(17, 111, 77, 1) << 16) |
-                                GPACK_RGBA5551(17, 111, 77, 1));
-        gDPFillRectangle(gfx++, centerX - medallionRadius / 2 - pulse,
-                         centerY - medallionRadius / 2 - pulse,
-                         centerX + medallionRadius / 2 + pulse,
-                         centerY + medallionRadius / 2 + pulse);
-
-        // Animated burst flashes and smoke wisps. Final art assets will replace these primitives.
-        if (flash > 0) {
-            gDPSetFillColor(gfx++, (GPACK_RGBA5551(65, 182, 130, 1) << 16) |
-                                    GPACK_RGBA5551(65, 182, 130, 1));
-            gDPFillRectangle(gfx++, centerX - 2 - (24 - flash) * 4, centerY - 2,
-                             centerX + 2 + (24 - flash) * 4, centerY + 2);
-        }
-        if (introFrame >= 85 && introFrame < 160) {
-            smoke = introFrame - 85;
-            gDPSetFillColor(gfx++, (GPACK_RGBA5551(22, 87, 69, 1) << 16) |
-                                    GPACK_RGBA5551(22, 87, 69, 1));
-            for (smokeI = 0; smokeI < 8; ++smokeI) {
-                s32 smokeX = centerX + (smoke * (smokeI + 1) * 3) % 224 - 112;
-                s32 smokeY = centerY - 16 - smokeI * 7;
-                gDPFillRectangle(gfx++, smokeX - 10, smokeY, smokeX + 10, smokeY + 2);
-            }
-        }
-
         Gfx_SetupDL_39Ptr(&gfx);
         gDPPipeSync(gfx++);
+        gDPSetCycleType(gfx++, G_CYC_1CYCLE);
+        gDPSetAlphaCompare(gfx++, G_AC_NONE);
+        gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-        gDPSetPrimColor(gfx++, 0, 0, 204, 226, 196, titleAlpha);
 
-        titleX = 106;
-        for (i = 0; title[i] != 0; ++i) {
-            if (introFrame > 109 + (s32)i * 3) {
+        // Emerald glow: three soft offset passes, then the sharp readable wordmark.
+        for (i = 0; i < 3; i++) {
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 22, 200, 124, glowAlpha / (i + 2));
+            x = 93 + i - 1;
+            for (s32 j = 0; title[j] != 0; ++j) {
                 EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                    (title[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                    titleX, 130);
+                    (title[j] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                    x, 102 + i - 1);
+                x += 15;
             }
-            titleX += 12;
         }
 
-        if (showPrompt) {
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 0, 211, 232, 196, alpha);
+        x = 93;
+        for (i = 0; title[i] != 0; ++i) {
+            EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                (title[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                x, 102);
+            x += 15;
+        }
+
+        if (veilboundFrame > 85 && ((veilboundFrame / 25) & 1) == 0) {
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 168, 221, 187, 255);
-            titleX = 120;
+            gDPSetPrimColor(gfx++, 0, 0, 128, 236, 185, 220);
+            x = 115;
             for (i = 0; startText[i] != 0; ++i) {
                 if (startText[i] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (startText[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        titleX, 171);
+                        x, 180);
                 }
-                titleX += 7;
+                x += 8;
             }
         }
     }
