@@ -532,6 +532,40 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
     gSPSegment(gfx++, 0x06, play->objectCtx.status[this->actor.objBankIndex].segment);
 
     Gfx_SetupDL_39Ptr(&gfx);
+    // VEILBOUND: actual OoT title actor. Suppress all original Zelda logo assets.
+    // Keep control handling in EnMag_Update intact for now.
+    gDPPipeSync(gfx++);
+    gDPSetCycleType(gfx++, G_CYC_FILL);
+    gDPSetFillColor(gfx++, (GPACK_RGBA5551(9, 24, 29, 1) << 16) | GPACK_RGBA5551(9, 24, 29, 1));
+    gDPFillRectangle(gfx++, 48, 42, 270, 188);
+    Gfx_SetupDL_39Ptr(&gfx);
+    gDPPipeSync(gfx++);
+    gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                      0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+    gDPSetPrimColor(gfx++, 0, 0, 176, 229, 198, 255);
+    {
+        const char* title = "VEILBOUND";
+        const char* start = "PRESS START";
+        s32 xx = 110;
+        for (i = 0; title[i] != 0; ++i) {
+            EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                (title[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                xx, 107);
+            xx += 12;
+        }
+        xx = 120;
+        for (i = 0; start[i] != 0; ++i) {
+            if (start[i] != ' ') {
+                EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                    (start[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                    xx, 152);
+            }
+            xx += 7;
+        }
+    }
+    *gfxP = gfx;
+    return;
+
 
     this->effectScroll -= 2;
 
