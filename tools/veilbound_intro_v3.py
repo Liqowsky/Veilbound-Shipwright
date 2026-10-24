@@ -5,11 +5,11 @@ random.seed(23)
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 s=bpy.context.scene
 s.render.engine='BLENDER_EEVEE'
-s.eevee.taa_render_samples=16
+s.eevee.taa_render_samples=64
 s.eevee.use_gtao=True
 s.eevee.use_bloom=True
 s.render.resolution_x=1280;s.render.resolution_y=720
-s.render.resolution_percentage=int(os.getenv('VB_PERCENT','55'))
+s.render.resolution_percentage=int(os.getenv('VB_PERCENT','75'))
 s.render.fps=24;s.frame_start=1;s.frame_end=int(os.getenv('VB_FRAMES','216'))
 s.render.image_settings.file_format='PNG';s.render.filepath='//renders/frame_'
 s.view_settings.view_transform='Standard';s.view_settings.look='Medium High Contrast'
@@ -23,6 +23,8 @@ def mat(name,color,metal=0,rough=.35,emission=0):
   if 'Emission Strength' in p.inputs:p.inputs['Emission Strength'].default_value=emission
  return m
 gold=mat('Aged engraved gold',(0.61,.41,.13),.85,.22)
+edgegold=mat('Bright gold edges',(.86,.66,.29),.88,.18)
+stone=mat('Pale stone inset',(.54,.58,.48),.12,.64)
 silver=mat('Dull ancient silver',(.34,.44,.44),.8)
 dark=mat('Black patina',(.022,.045,.042),.6)
 emerald=mat('Pulsating emerald',(.015,.95,.38),.17,.15,6)
@@ -48,6 +50,9 @@ def torus(name,r,thick,material,parent=None):
  return o
 pendant=bpy.data.objects.new('Medallion animated root',None);s.collection.objects.link(pendant)
 back=cylinder('Eight-point spiked medallion',.46,.15,silver,pendant)
+for j in range(3):
+ detail=torus('Forged concentric filigree %d'%j,.295+j*.062,.014,edgegold,pendant)
+ detail.location.y=-.125-j*.003
 rim=torus('Carved antique golden rim',.46,.065,gold,pendant);rim.location.y=-.12
 inside=cylinder('Inset dark recess',.36,.018,dark,pendant);inside.location.y=-.095
 core=bpy.data.objects.new('Emerald pulse root',None);s.collection.objects.link(core);core.parent=pendant
@@ -57,7 +62,11 @@ for i in range(8):
  bpy.ops.mesh.primitive_cone_add(vertices=5,radius1=.16,radius2=0,depth=.40)
  o=bpy.context.object;o.name='Ancient medallion spike %d'%i;o.parent=pendant
  o.location=(.52*cos(a),-.05,.52*sin(a));o.rotation_euler=(0,-pi/2+a,pi/2)
- o.data.materials.append(gold);bevel(o,.015)
+ o.data.materials.append(edgegold);bevel(o,.015)
+for j in range(16):
+ a=2*pi*j/16
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,radius=.024,location=(.405*cos(a),-.18,.405*sin(a)))
+ nail=bpy.context.object;nail.name='Riveted bronze detail %02d'%j;nail.parent=pendant;nail.data.materials.append(edgegold)
 # Early flight approaches camera and locks in final title medallion position.
 for f,pos,sc,rotation in [
  (1,(1.95,8.0,2.25),(.12,)*3,(.3,-.9,.8)),
@@ -72,14 +81,20 @@ curve=bpy.data.curves.new('3D Wordmark','FONT')
 curve.body='VEILBOUND';curve.align_x='CENTER';curve.align_y='CENTER'
 curve.size=1.45;curve.extrude=.11;curve.bevel_depth=.021;curve.bevel_resolution=2
 word=bpy.data.objects.new('VEILBOUND real extruded 3D letters',curve);s.collection.objects.link(word)
-curve.materials.append(gold);word.rotation_euler.x=pi/2;word.location=(0,.25,.15)
+curve.materials.append(gold);word.rotation_euler.x=pi/2;word.location=(0,.25,.30)
+# Fine carved metallic underlay adds visual weight to the logo.
+under=word.copy();under.data=word.data.copy();s.collection.objects.link(under)
+under.name='Dimensional stone underlay';under.data.materials.clear();under.data.materials.append(stone)
+under.location.y=.39;under.scale=(1.035,1.035,1.035)
+for f,sc in [(1,.001),(104,.001),(128,.68),(149,1),(216,1)]:
+ k(under,f,scale=(sc*1.035,sc*1.035,sc*1.035))
 for f,sc in [(1,.001),(104,.001),(128,.68),(149,1),(216,1)]:
  k(word,f,scale=(sc,sc,sc))
 # chain links are actual torus meshes, each independently animated; S-shaped arc interlaces title.
 for i in range(28):
  u=i/27
  x=-3.6+7.2*u
- z=.85+.42*sin(3*pi*u)+.18*sin(9*pi*u)
+ z=.84+.42*sin(3*pi*u)+.18*sin(9*pi*u)
  chain=torus('Articulated golden link %02d'%i,.13,.039,chainmat)
  for fr in [1,22,46,68,96,130,162,216]:
   t=min(1,max(0,(fr-46)/116));t=t*t*(3-2*t)
