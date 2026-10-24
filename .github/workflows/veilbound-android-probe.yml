@@ -28,34 +28,13 @@ jobs:
           ref: main
           path: android-port
           submodules: recursive
-      - name: Transplant original title overlay to Android source
+      - name: Replace native Ocarina of Time title state
         shell: bash
         run: |
           set -euo pipefail
-          cd android-port
-          mkdir -p soh/soh/Veilbound
-          cp ../veilbound/soh/soh/Veilbound/VeilboundTitleMenu.hpp soh/soh/Veilbound/
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path("soh/soh/SohGui/SohGui.cpp")
-          source = path.read_text()
-          required = [
-              ('#include "SohGui.hpp"', '#include "SohGui.hpp"\n#include "soh/Veilbound/VeilboundTitleMenu.hpp"'),
-              ('std::shared_ptr<Ship::GuiWindow> mConsoleWindow;', 'std::shared_ptr<Veilbound::TitleWindow> mVeilboundTitleWindow;\nstd::shared_ptr<Ship::GuiWindow> mConsoleWindow;'),
-              ('void SetupGuiElements() {\n    auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();',
-               'void SetupGuiElements() {\n    auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();\n'
-               '    mVeilboundTitleWindow = std::make_shared<Veilbound::TitleWindow>(\n'
-               '        CVAR_WINDOW("VeilboundTitle"), "Veilbound Title");\n'
-               '    gui->AddGuiWindow(mVeilboundTitleWindow);\n'
-               '    mVeilboundTitleWindow->Show();'),
-          ]
-          for old, new in required:
-              if old not in source:
-                  raise RuntimeError(f"Android source changed; missing integration anchor: {old[:75]}")
-              source = source.replace(old,new,1)
-          path.write_text(source)
-          print("Veilbound title overlay transplanted to Android port")
-          PY
+          cp veilbound/soh/src/overlays/gamestates/ovl_title/z_title.c \
+             android-port/soh/src/overlays/gamestates/ovl_title/z_title.c
+          echo "Replaced native Title_Draw; experimental ImGui menu not installed"
       - name: Set Android SDK properties
         working-directory: android-port
         shell: bash
