@@ -34,12 +34,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install Android NDK and CMake
+      - name: Use preinstalled Android SDK and install required packages
+        shell: bash
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platforms;android-31' 'build-tools;35.0.0' 'ndk;26.0.10792818' 'cmake;3.31.5'
+          set -euxo pipefail
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+          SDKROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          test -d "$SDKROOT"
+          export ANDROID_HOME="$SDKROOT"
+          export ANDROID_SDK_ROOT="$SDKROOT"
+          SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
+          printf 'y\\n' | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-31" "build-tools;35.0.0" "ndk;26.0.10792818" "cmake;3.31.5"
       - name: Install Linux build prerequisites
         run: |
           sudo apt-get update
