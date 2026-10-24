@@ -1,0 +1,90 @@
+name: Veilbound Android port feasibility
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - veilbound/prologue-experiment
+    paths:
+      - '.github/workflows/veilbound-android-probe.yml'
+      - 'soh/soh/Veilbound/**'
+
+jobs:
+  android-debug:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    container:
+      image: djvdw7f2ro/android-builder-soh:v1.0.4
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Veilbound experiments
+        uses: actions/checkout@v4
+        with:
+          path: veilbound
+      - name: Checkout Android port as separate source
+        uses: actions/checkout@v4
+        with:
+          repository: linkzenic/Shipwright-Android
+          ref: main
+          path: android-port
+          submodules: recursive
+      - name: Transplant original title overlay to Android source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd android-port
+          mkdir -p soh/soh/Veilbound
+          cp ../veilbound/soh/soh/Veilbound/VeilboundTitleMenu.hpp soh/soh/Veilbound/
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("soh/soh/SohGui/SohGui.cpp")
+          source = path.read_text()
+          required = [
+              ('#include "SohGui.hpp"', '#include "SohGui.hpp"\n#include "soh/Veilbound/VeilboundTitleMenu.hpp"'),
+              ('std::shared_ptr<Ship::GuiWindow> mConsoleWindow;', 'std::shared_ptr<Veilbound::TitleWindow> mVeilboundTitleWindow;\nstd::shared_ptr<Ship::GuiWindow> mConsoleWindow;'),
+              ('void SetupGuiElements() {\n    auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();',
+               'void SetupGuiElements() {\n    auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();\n'
+               '    mVeilboundTitleWindow = std::make_shared<Veilbound::TitleWindow>(\n'
+               '        CVAR_WINDOW("VeilboundTitle"), "Veilbound Title");\n'
+               '    gui->AddGuiWindow(mVeilboundTitleWindow);\n'
+               '    mVeilboundTitleWindow->Show();'),
+          ]
+          for old, new in required:
+              if old not in source:
+                  raise RuntimeError(f"Android source changed; missing integration anchor: {old[:75]}")
+              source = source.replace(old,new,1)
+          path.write_text(source)
+          print("Veilbound title overlay transplanted to Android port")
+          PY
+      - name: Set Android SDK properties
+        working-directory: android-port
+        shell: bash
+        run: |
+          echo "sdk.dir=${ANDROID_SDK_ROOT}" > Android/local.properties
+          echo "ndk.dir=${ANDROID_NDK_HOME}" >> Android/local.properties
+      - name: Install required host build dependencies
+        working-directory: android-port
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y $(cat .github/workflows/apt-deps.txt)
+      - name: Generate required non-Nintendo engine resource archive
+        working-directory: android-port
+        shell: bash
+        run: |
+          cmake -S . -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-linux --target GenerateSohOtr --parallel 4
+          cp soh/soh.o2r Android/app/src/main/assets/soh.o2r
+      - name: Build unsigned-for-release debug APK
+        working-directory: android-port/Android
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Publish test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: veilbound-android-experiment
+          path: android-port/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
