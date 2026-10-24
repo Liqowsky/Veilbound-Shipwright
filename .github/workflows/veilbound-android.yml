@@ -69,18 +69,35 @@ jobs:
           set -o pipefail
           chmod +x ./gradlew
           ./gradlew :app:assembleDebug --no-daemon --console plain --warning-mode summary -PsohApplicationId=com.anekstudios.veilbound 2>&1 | tee "$GITHUB_WORKSPACE/veilbound-android-gradle.log"
-      - name: Show actual Gradle error summary
+      - name: Show actual compiler errors (not the 2400-line ninja task list)
         if: failure()
         shell: bash
         run: |
-          echo '=== GRADLE FAILURE DIAGNOSTICS ==='
-          if [ -f veilbound-android-gradle.log ]; then
-            grep -n -A 18 -B 5 -E '^FAILURE:|^\\* What went wrong:|^\\* Where:|^> |^Caused by:|^Could not|^Execution failed|^e: |^CMake Error|^error:|^ERROR:' veilbound-android-gradle.log | tail -n 200 || true
-            echo '=== LOG TAIL ==='
-            tail -n 100 veilbound-android-gradle.log
-          else
-            echo 'Gradle log missing; the job failed before Gradle completed.'
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('veilbound-android-gradle.log')
+          if not p.exists():
+              print('Gradle log unavailable: failure happened before Gradle')
+              raise SystemExit(0)
+          lines = p.read_text(errors='replace').splitlines()
+          patterns = [
+              re.compile(r'(?i)(fatal error:|(?:^|[\\s:])error:|FAILED:|undefined reference|ld\\.lld: error|ninja: build stopped|CMake Error|No space left|Killed signal|OutOfMemoryError|what went wrong|execution failed for task|could not (resolve|find|download)|BUILD FAILED)'),
+          ]
+          matches = [i for i,line in enumerate(lines) if any(p.search(line) for p in patterns)]
+          print(f'Full log: {len(lines)} lines; error indicators: {len(matches)}')
+          focus = matches[:12] + (matches[-12:] if len(matches)>12 else [])
+          seen=set()
+          for i in focus:
+              if i in seen: continue
+              seen.add(i)
+              print('\\n' + '='*12 + f' LOG LINE {i+1} ' + '='*12)
+              for j in range(max(0,i-3),min(len(lines),i+12)):
+                  print(f'{j+1}: {lines[j][:800]}')
+          if not matches:
+              print('NO MATCHES: last 100 lines:')
+              print('\\n'.join(lines[-100:]))
+          PY
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
