@@ -41,7 +41,7 @@ jobs:
         if: success()
         run: |
           mkdir -p build-output
-          find build-native -type f -executable ! -name '*.so' ! -name '*.a' -size +1M -exec cp -v {} build-output/ \\; || true
+          find build-native -type f -executable ! -name '*.so' ! -name '*.a' -size +1M -exec cp -v {} build-output/ \; || true
           find build-output -type f -maxdepth 1 -print
           test -n "$(find build-output -type f -maxdepth 1 -print -quit)"
       - name: Upload native test build
