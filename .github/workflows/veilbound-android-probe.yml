@@ -7,6 +7,12 @@ on:
     paths:
       - '.github/workflows/veilbound-android-probe.yml'
       - 'soh/soh/Veilbound/**'
+      - 'soh/src/overlays/actors/ovl_En_Mag/**'
+      - 'soh/src/overlays/gamestates/ovl_title/**'
+
+concurrency:
+  group: veilbound-android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   android-debug:
@@ -37,6 +43,15 @@ jobs:
           cp veilbound/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c \
              android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
           echo "Patched original OoT En_Mag actor responsible for the Zelda title screen"
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: veilbound-gradle-${{ runner.os }}-${{ hashFiles('android-port/Android/**/*.gradle', 'android-port/Android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            veilbound-gradle-${{ runner.os }}-
       - name: Set Android SDK properties
         working-directory: android-port
         shell: bash
