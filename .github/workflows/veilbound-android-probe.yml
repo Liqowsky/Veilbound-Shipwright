@@ -34,7 +34,9 @@ jobs:
           set -euo pipefail
           cp veilbound/soh/src/overlays/gamestates/ovl_title/z_title.c \
              android-port/soh/src/overlays/gamestates/ovl_title/z_title.c
-          echo "Replaced native Title_Draw; experimental ImGui menu not installed"
+          cp veilbound/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c \
+             android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
+          echo "Patched original OoT En_Mag actor responsible for the Zelda title screen"
       - name: Set Android SDK properties
         working-directory: android-port
         shell: bash
