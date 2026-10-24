@@ -58,68 +58,45 @@ void Title_SetupView(TitleContext* this, f32 x, f32 y, f32 z) {
     func_800AAA50(view, 0xF);
 }
 
+// Native OoT game-state experiment: never use ImGui to render the title.
+// This replaces Nintendo logo rendering with an original silver/emerald emblem.
+// The next phase must replace the separate file-select state as well.
 void Title_Draw(TitleContext* this) {
-    static s16 sTitleRotY = 0;
-    static Lights1 sTitleLights = gdSPDefLights1(0x64, 0x64, 0x64, 0xFF, 0xFF, 0xFF, 0x45, 0x45, 0x45);
-
-    u16 y;
-    u16 idx;
-    s32 pad1;
-    Vec3f v3;
-    Vec3f v1;
-    Vec3f v2;
-    s32 pad2[2];
-
-    OPEN_DISPS(this->state.gfxCtx);
-
-    v3.x = 69;
-    v3.y = 69;
-    v3.z = 69;
-    v2.x = -4949.148;
-    v2.y = 4002.5417;
-    v1.x = 0;
-    v1.y = 0;
-    v1.z = 0;
-    v2.z = 1119.0837;
-
-    func_8002EABC(&v1, &v2, &v3, this->state.gfxCtx);
-    gSPSetLights1(POLY_OPA_DISP++, sTitleLights);
-    Title_SetupView(this, 0, 150.0, 300.0);
-    Gfx_SetupDL_25Opa(this->state.gfxCtx);
-    Matrix_Translate(-53.0, -5.0, 0, MTXMODE_NEW);
-    Matrix_Scale(1.0, 1.0, 1.0, MTXMODE_APPLY);
-    Matrix_RotateZYX(0, sTitleRotY, 0, MTXMODE_APPLY);
-
-    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(this->state.gfxCtx), G_MTX_LOAD);
-    gSPDisplayList(POLY_OPA_DISP++, gNintendo64LogoDL);
-    Gfx_SetupDL_39Opa(this->state.gfxCtx);
+    GraphicsContext* gfxCtx = this->state.gfxCtx;
+    s32 beatPhase = this->ult % 160;
+    s32 pulse = ((beatPhase >= 16 && beatPhase < 24) || (beatPhase >= 42 && beatPhase < 50)) ? 8 : 0;
+    s32 radius = 20 + pulse;
+    s32 x = 160;
+    s32 y = 112;
+    s32 i;
+    OPEN_DISPS(gfxCtx);
+    Gfx_SetupDL_39Opa(gfxCtx);
     gDPPipeSync(POLY_OPA_DISP++);
-    gDPSetCycleType(POLY_OPA_DISP++, G_CYC_2CYCLE);
-    gDPSetRenderMode(POLY_OPA_DISP++, G_RM_XLU_SURF2, G_RM_OPA_CI | CVG_DST_WRAP);
-    gDPSetCombineLERP(POLY_OPA_DISP++, TEXEL1, PRIMITIVE, ENV_ALPHA, TEXEL0, 0, 0, 0, TEXEL0, PRIMITIVE, ENVIRONMENT,
-                      COMBINED, ENVIRONMENT, COMBINED, 0, PRIMITIVE, 0);
-    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
-    gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 255, 128);
-
-    gDPLoadMultiBlock(POLY_OPA_DISP++, nintendo_rogo_static_Tex_001800, 0x100, 1, G_IM_FMT_I, G_IM_SIZ_8b, 32, 32, 0,
-                      G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 5, 5, 2, 11);
-
-    for (idx = 0, y = 94; idx < 16; idx++, y += 2) {
-        gDPLoadMultiTile(POLY_OPA_DISP++, nintendo_rogo_static_Tex_000000, 0, G_TX_RENDERTILE, G_IM_FMT_I, G_IM_SIZ_8b,
-                         192, 32, 0, idx * 2, 192 - 1, (idx + 1) * 2 - 1, 0, G_TX_NOMIRROR | G_TX_WRAP,
-                         G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
-
-        gDPSetTileSize(POLY_OPA_DISP++, 0, 0, 0, (192 - 1) << G_TEXTURE_IMAGE_FRAC, (2 - 1) << G_TEXTURE_IMAGE_FRAC);
-
-        gDPSetTileSize(POLY_OPA_DISP++, 1, this->uls, (this->ult & 0x7F) - idx * 4, 0, 0);
-        gSPTextureRectangle(POLY_OPA_DISP++, 388, y << 2, 1156, (y + 2) << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
+    gDPSetCycleType(POLY_OPA_DISP++, G_CYC_FILL);
+    // Original deep-green backdrop, rendered by the original engine pipeline.
+    gDPSetFillColor(POLY_OPA_DISP++, (GPACK_RGBA5551(7, 19, 23, 1) << 16) |
+                                           GPACK_RGBA5551(7, 19, 23, 1));
+    gDPFillRectangle(POLY_OPA_DISP++, 0, 0, 319, 239);
+    // Layered forged-silver medallion, two heartbeats, luminous emerald core.
+    gDPSetFillColor(POLY_OPA_DISP++, (GPACK_RGBA5551(184, 196, 191, 1) << 16) |
+                                           GPACK_RGBA5551(184, 196, 191, 1));
+    for (i = -radius; i <= radius; i += 3) {
+        s32 halfWidth = (radius * radius - i * i) / (radius * 2);
+        gDPFillRectangle(POLY_OPA_DISP++, x-halfWidth, y+i, x+halfWidth, y+i+1);
     }
-
-    Environment_FillScreen(this->state.gfxCtx, 0, 0, 0, (s16)this->coverAlpha, FILL_SCREEN_XLU);
-
-    sTitleRotY += 300;
-
-    CLOSE_DISPS(this->state.gfxCtx);
+    gDPSetFillColor(POLY_OPA_DISP++, (GPACK_RGBA5551(10, 41, 35, 1) << 16) |
+                                           GPACK_RGBA5551(10, 41, 35, 1));
+    for (i = -radius+5; i <= radius-5; i += 3) {
+        s32 halfWidth = ((radius-5)*(radius-5) - i*i)/((radius-5)*2);
+        gDPFillRectangle(POLY_OPA_DISP++, x-halfWidth, y+i, x+halfWidth, y+i+1);
+    }
+    gDPSetFillColor(POLY_OPA_DISP++, (GPACK_RGBA5551(34, 205, 125, 1) << 16) |
+                                           GPACK_RGBA5551(34, 205, 125, 1));
+    gDPFillRectangle(POLY_OPA_DISP++, x-6-pulse/4, y-6-pulse/4, x+6+pulse/4, y+6+pulse/4);
+    gDPPipeSync(POLY_OPA_DISP++);
+    // Respect the existing game's fade/transition logic.
+    Environment_FillScreen(gfxCtx, 0, 0, 0, (s16)this->coverAlpha, FILL_SCREEN_XLU);
+    CLOSE_DISPS(gfxCtx);
 }
 
 void Title_Main(GameState* thisx) {
