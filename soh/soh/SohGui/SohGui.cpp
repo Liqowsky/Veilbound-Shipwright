@@ -8,6 +8,7 @@
 #include <imgui.h>
 
 #include "SohGui.hpp"
+#include "soh/Veilbound/VeilboundTitleMenu.hpp"
 
 #ifdef __APPLE__
 #include <fast/backends/gfx_metal.h>
@@ -78,6 +79,7 @@ std::string GetWindowButtonText(const char* text, bool menuOpen) {
 
 // MARK: - Delegates
 
+std::shared_ptr<Veilbound::TitleWindow> mVeilboundTitleWindow;
 std::shared_ptr<Ship::GuiWindow> mConsoleWindow;
 std::shared_ptr<SohStatsWindow> mStatsWindow;
 std::shared_ptr<Ship::GuiWindow> mGfxDebuggerWindow;
@@ -124,6 +126,7 @@ std::vector<std::shared_ptr<Ship::GuiWindow>> GetAllGuiWindows() {
     auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();
     return {
         mConsoleWindow,
+        mVeilboundTitleWindow,
         mStatsWindow,
         mGfxDebuggerWindow,
         mModMenuWindow,
@@ -178,6 +181,12 @@ void SetupMenuElements() {
 
 void SetupGuiElements() {
     auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();
+
+    // Experiment: standalone original title overlay; never replace Zelda resource data.
+    mVeilboundTitleWindow = std::make_shared<Veilbound::TitleWindow>(
+        CVAR_WINDOW("VeilboundTitle"), "Veilbound Title");
+    gui->AddGuiWindow(mVeilboundTitleWindow);
+    mVeilboundTitleWindow->Show();
 
     mConsoleWindow = std::make_shared<SohConsoleWindow>(CVAR_WINDOW("SohConsole"), "Console##SoH", ImVec2(820, 630));
     gui->AddGuiWindow(mConsoleWindow);
@@ -273,6 +282,7 @@ void SetupGuiElements() {
 }
 
 void Destroy() {
+    mVeilboundTitleWindow = nullptr;
     auto gui = Ship::Context::GetRawInstance()->GetWindow()->GetGui();
     gui->RemoveAllGuiWindows();
 
