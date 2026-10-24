@@ -186,7 +186,8 @@ void SetupGuiElements() {
     mVeilboundTitleWindow = std::make_shared<Veilbound::TitleWindow>(
         CVAR_WINDOW("VeilboundTitle"), "Veilbound Title");
     gui->AddGuiWindow(mVeilboundTitleWindow);
-    mVeilboundTitleWindow->Show();
+    // Native title states now own the Veilbound title presentation.
+    // The experimental ImGui overlay must never obscure the game.
 
     mConsoleWindow = std::make_shared<SohConsoleWindow>(CVAR_WINDOW("SohConsole"), "Console##SoH", ImVec2(820, 630));
     gui->AddGuiWindow(mConsoleWindow);
