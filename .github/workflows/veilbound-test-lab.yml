@@ -12,17 +12,35 @@ permissions:
   contents: read
 
 jobs:
-  native-title-source-guard:
-    name: Native title integration guard (source only)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+  native-build:
+    name: Build native OoT engine + title screen
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
-      - name: Check Python script syntax
-        run: python3 -m py_compile tests/veilbound_title_guard.py
-      - name: Check native title actor integration
-        run: python3 tests/veilbound_title_guard.py
-      - name: Explain scope
+      - name: Checkout full native engine
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Validate native title integration
         run: |
-          echo "This job checks source integration only."
-          echo "It does NOT build an Android APK, run a game, validate assets, or verify title pixels."
+          python3 -m py_compile tests/veilbound_title_guard.py
+          python3 tests/veilbound_title_guard.py
+      - name: Install documented Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y $(cat linux-build-deps/apt.txt)
+      - name: Configure tools for native asset archive
+        run: cmake -S . -B build-tools -G Ninja -DCMAKE_BUILD_TYPE=Release -DSOH_TOOLS_ONLY=ON
+      - name: Build engine-owned archive
+        run: cmake --build build-tools --target GenerateSohOtr -j4
+      - name: Configure native game build
+        run: cmake -S . -B build-native -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Compile and link native game
+        run: cmake --build build-native -j4
+      - name: Record build provenance
+        if: always()
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source revision: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Platform: Linux native (NOT Android APK)" >> "$GITHUB_STEP_SUMMARY"
+          echo "A successful compile DOES NOT prove title-screen visuals." >> "$GITHUB_STEP_SUMMARY"
