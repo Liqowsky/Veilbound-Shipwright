@@ -20,8 +20,9 @@ def material(name,c,metal=0,emit=0):
  p.inputs['Metallic'].default_value=metal
  p.inputs['Roughness'].default_value=.34
  if emit:
-  p.inputs['Emission Color'].default_value=(*c,1)
-  p.inputs['Emission Strength'].default_value=emit
+  color_socket='Emission Color' if 'Emission Color' in p.inputs else 'Emission'
+  p.inputs[color_socket].default_value=(*c,1)
+  if 'Emission Strength' in p.inputs:p.inputs['Emission Strength'].default_value=emit
  return m
 silver=material('Ancient silver',(.48,.56,.53),.8)
 bronze=material('Bronze chain',(.49,.34,.16),.85)
