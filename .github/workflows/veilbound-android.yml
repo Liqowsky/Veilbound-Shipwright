@@ -1,0 +1,66 @@
+name: VEILBOUND Android APK (experimental)
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - veilbound/test-lab
+    paths:
+      - 'soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c'
+      - '.github/workflows/veilbound-android.yml'
+permissions:
+  contents: read
+jobs:
+  android-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout VEILBOUND native title edits
+        uses: actions/checkout@v4
+        with:
+          path: veilbound
+      - name: Checkout existing Android port including submodules
+        uses: actions/checkout@v4
+        with:
+          repository: linkzenic/Shipwright-Android
+          ref: main
+          path: android-port
+          submodules: recursive
+      - name: Copy only VEILBOUND title actor into port
+        run: |
+          cp veilbound/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
+          grep -q 'VEILBOUND native title' android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android NDK and CMake
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-31' 'build-tools;35.0.0' 'ndk;26.0.10792818' 'cmake;3.31.5'
+      - name: Install Linux build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake pkg-config libgl1-mesa-dev libglu1-mesa-dev libusb-1.0-0-dev libpng-dev libzip-dev libogg-dev libvorbis-dev libopus-dev
+      - name: Build VEILBOUND standalone debug APK
+        working-directory: android-port/Android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug --stacktrace --no-daemon -PsohApplicationId=com.anekstudios.veilbound
+      - name: Validate APK output
+        run: |
+          find android-port/Android/app/build/outputs/apk/debug -type f -name '*.apk' -print
+          test -n "$(find android-port/Android/app/build/outputs/apk/debug -name '*.apk' -print -quit)"
+      - name: Upload VEILBOUND Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VEILBOUND-Android-debug-APK
+          path: android-port/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Build summary
+        if: always()
+        run: |
+          echo "VEILBOUND title actor from $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Uses linkzenic Android port; this workflow builds APK, not a proof of in-game rendering." >> "$GITHUB_STEP_SUMMARY"
