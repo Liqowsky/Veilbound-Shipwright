@@ -32,10 +32,10 @@ def check() -> list[str]:
         failures.append("Native EnMag_DrawInner lacks VEILBOUND title marker")
     if not re.search(r"gDP(?:FillRectangle|SetFillColor|SetPrimColor)|gSPTextureRectangle", draw):
         failures.append("Native title draw has no graphics display-list instructions")
-    # Ignore comments: descriptive phrases like "NOT an ImGui overlay" are harmless.
-    without_comments = re.sub(r"/\\*.*?\\*/", "", draw, flags=re.DOTALL)
-    without_comments = re.sub(r"//[^\\n]*", "", without_comments)
-    if re.search(r"\\b(?:ImGui|igBegin|igEnd|igText)\\s*\\(", without_comments):
+    # Strip C comments before inspecting actual calls.
+    without_comments = re.sub(r"/\*.*?\*/", "", draw, flags=re.DOTALL)
+    without_comments = re.sub(r"//[^\n]*", "", without_comments)
+    if any(name in without_comments for name in ("ImGui::", "igBegin(", "igEnd(", "igText(")):
         failures.append("Native title actor invokes an ImGui UI function")
     if "GAMEMODE_FILE_SELECT" not in update or "TRANS_TRIGGER_START" not in update:
         failures.append("Native input-to-file-select transition is missing")
