@@ -532,40 +532,74 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
     gSPSegment(gfx++, 0x06, play->objectCtx.status[this->actor.objBankIndex].segment);
 
     Gfx_SetupDL_39Ptr(&gfx);
-    // VEILBOUND: actual OoT title actor. Suppress all original Zelda logo assets.
-    // Keep control handling in EnMag_Update intact for now.
-    gDPPipeSync(gfx++);
-    gDPSetCycleType(gfx++, G_CYC_FILL);
-    gDPSetFillColor(gfx++, (GPACK_RGBA5551(9, 24, 29, 1) << 16) | GPACK_RGBA5551(9, 24, 29, 1));
-    gDPFillRectangle(gfx++, 48, 42, 270, 188);
-    Gfx_SetupDL_39Ptr(&gfx);
-    gDPPipeSync(gfx++);
-    gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
-                      0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-    gDPSetPrimColor(gfx++, 0, 0, 176, 229, 198, 255);
+    // VEILBOUND native title screen. No ImGui or external overlay.
+    // Draw entirely through the OoT display list, preserving EnMag_Update input and fade transitions.
     {
+        static const u8 moonHalfWidth[25] = {
+            0, 7, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 22,
+            23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24
+        };
         const char* title = "VEILBOUND";
-        const char* start = "PRESS START";
-        s32 xx = 110;
+        const char* prompt = "PRESS START";
+        s32 row;
+        s32 xx;
+
+        gDPPipeSync(gfx++);
+        gDPSetCycleType(gfx++, G_CYC_FILL);
+        gDPSetFillColor(gfx++, (GPACK_RGBA5551(7, 17, 24, 1) << 16) | GPACK_RGBA5551(7, 17, 24, 1));
+        gDPFillRectangle(gfx++, 0, 0, 319, 239);
+
+        // Two stacked circular silhouettes create an actual crescent moon,
+        // rather than the arced line from the previous prototype.
+        gDPSetFillColor(gfx++, (GPACK_RGBA5551(235, 217, 168, 1) << 16) |
+                                GPACK_RGBA5551(235, 217, 168, 1));
+        for (row = -24; row <= 24; ++row) {
+            s32 extent = moonHalfWidth[24 - ((row < 0) ? -row : row)];
+            gDPFillRectangle(gfx++, 160 - extent, 76 + row, 160 + extent, 76 + row);
+        }
+
+        gDPSetFillColor(gfx++, (GPACK_RGBA5551(7, 17, 24, 1) << 16) | GPACK_RGBA5551(7, 17, 24, 1));
+        for (row = -24; row <= 24; ++row) {
+            s32 extent = moonHalfWidth[24 - ((row < 0) ? -row : row)];
+            gDPFillRectangle(gfx++, 171 - extent, 70 + row, 171 + extent, 70 + row);
+        }
+
+        // Fine native ornaments framing the title.
+        gDPSetFillColor(gfx++, (GPACK_RGBA5551(88, 117, 115, 1) << 16) |
+                                GPACK_RGBA5551(88, 117, 115, 1));
+        gDPFillRectangle(gfx++, 52, 145, 124, 145);
+        gDPFillRectangle(gfx++, 196, 145, 268, 145);
+        gDPFillRectangle(gfx++, 158, 142, 161, 148);
+
+        Gfx_SetupDL_39Ptr(&gfx);
+        gDPPipeSync(gfx++);
+        gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                          0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+        gDPSetPrimColor(gfx++, 0, 0, 236, 224, 194, (s16)this->mainAlpha);
+
+        // OoT's ordered font contains exactly the glyphs needed by this title.
+        xx = 106;
         for (i = 0; title[i] != 0; ++i) {
             EnMag_DrawCharTexture(&gfx, font->fontBuf +
                 (title[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                xx, 107);
+                xx, 122);
             xx += 12;
         }
+
+        gDPPipeSync(gfx++);
+        gDPSetPrimColor(gfx++, 0, 0, 173, 199, 193, (s16)this->copyrightAlpha);
         xx = 120;
-        for (i = 0; start[i] != 0; ++i) {
-            if (start[i] != ' ') {
+        for (i = 0; prompt[i] != 0; ++i) {
+            if (prompt[i] != ' ') {
                 EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                    (start[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                    xx, 152);
+                    (prompt[i] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                    xx, 173);
             }
             xx += 7;
         }
     }
     *gfxP = gfx;
     return;
-
 
     this->effectScroll -= 2;
 
