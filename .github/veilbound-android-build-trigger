@@ -1,1 +1,1 @@
-Build request: logo 208x192 (from 160x160 source), start plaque 112x28, emerald transparent mist 84x58 using new native texture scaling. Code e4f4debc079f20de34a319cc45d0345fe740dd71.
+Experimental HD render test, source 9b4dee7d481dd430ecb904cdc6cf24b040f89852: 512x512 logo O2R REQUIRED. Companion zip: VEILBOUND_TRUE_HD_512_ANDROID_EXPERIMENT.o2r. Do not run without replacing prior logo mod.
