@@ -78,6 +78,17 @@ def spark():
             px[x,y]=(110,255,184,max(0,min(255,a)))
     return im
 
+def crystal():
+    im=Image.new("RGBA",(16,24),(0,0,0,0))
+    d=ImageDraw.Draw(im)
+    d.polygon([(8,0),(15,8),(12,20),(8,23),(4,20),(1,8)],fill=(14,126,99,215),
+              outline=(179,164,83,230))
+    d.polygon([(8,1),(8,21),(3,9)],fill=(30,233,169,220))
+    d.polygon([(8,1),(13,9),(8,21)],fill=(7,77,67,237))
+    d.line([(8,1),(8,21)],fill=(141,255,220,210),width=1)
+    d.point((7,5),fill=(239,255,234,255))
+    return im
+
 def write_header(path, btn, haze):
     def arr(name,im):
         data=list(im.tobytes())
@@ -91,6 +102,7 @@ def write_header(path, btn, haze):
     header+=arr("sVeilboundStartButtonTex",btn)
     header+=arr("sVeilboundMistTex",haze)
     header+=arr("sVeilboundSparkTex", spark())
+    header+=arr("sVeilboundCrystalTex", crystal())
     header+="#endif\n"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(header)
