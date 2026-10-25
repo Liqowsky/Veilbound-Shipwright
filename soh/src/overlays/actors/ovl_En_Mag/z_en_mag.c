@@ -565,6 +565,30 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+        // Animated emerald vapour from the existing 32x32 flame texture.
+        // Small, slow parallax passes appear before the emblem is fully visible.
+        // Uses the original I8 texture; no missing external HD asset dependency.
+        if (veilboundFrame > 4) {
+            s32 mistAlpha = (veilboundFrame - 4) * 3;
+            s32 drift;
+            if (mistAlpha > 62) mistAlpha = 62;
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetCycleType(gfx++, G_CYC_1CYCLE);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            for (n = 0; n < 4; ++n) {
+                drift = ((veilboundFrame * (n + 2) / 8 + n * 37) % 96);
+                gDPPipeSync(gfx++);
+                gDPSetPrimColor(gfx++, 0, 0, 14, 173 + n * 12, 113, mistAlpha / (n + 1));
+                EnMag_DrawTextureI8(&gfx, gTitleFlameEffectTex, 32, 32,
+                                   68 + n * 43 - drift / 3, 110 + n * 12 - drift / 6,
+                                   85, 44, 384, 745);
+            }
+        }
+
         // Emerald aura emerges first; repeated offset silhouette creates breathing glow.
         // Uses the approved logo alpha, not a rectangular glow plate.
         if (alpha > 0) {
@@ -575,6 +599,28 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
+        }
+
+        // Tiny glints drifting up from the medallion. Deterministic positions,
+        // no allocation, no RNG and no game-state/input changes.
+        if (veilboundFrame > 28) {
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            for (n = 0; n < 13; ++n) {
+                s32 phase = (veilboundFrame * (2 + (n % 3)) + n * 31) % 150;
+                s32 px = 113 + (n * 47 % 98) + ((phase / 17) % 5) - 2;
+                s32 py = 150 - phase / 3 + (n * 11 % 20);
+                s32 a = (phase < 20 ? phase * 6 : (phase > 115 ? (150 - phase) * 3 : 100));
+                if (a > 110) a = 110;
+                gDPPipeSync(gfx++);
+                gDPSetPrimColor(gfx++, 0, 0, 102, 252, 173, a);
+                EnMag_DrawTextureI8(&gfx, gTitleFlameEffectTex, 32, 32,
+                                   px, py, 5 + (n % 3), 5 + (n % 3), 4096, 4096);
+            }
         }
 
         // VEILBOUND: gilded subtitle replaces Ocarina of Time (no legacy title overlays).
