@@ -47,7 +47,7 @@ jobs:
           for f in (root/"res").glob("values*/strings.xml"):
               s=f.read_text()
               import re
-              s=re.sub(r'(<string name="app_name">).*?(</string>)',r'\\1Veilbound\\2',s)
+              s=re.sub(r'(<string name="app_name">).*?(</string>)',lambda m:m.group(1)+'Veilbound'+m.group(2),s)
               f.write_text(s)
           activity=root/"java/com/dishii/soh/MainActivity.java"
           s=activity.read_text()
@@ -60,6 +60,15 @@ jobs:
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
                 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);''')
+          # Allow rendering inside camera cutout on Android 9+.
+          s=s.replace('getWindow().getDecorView().setSystemUiVisibility(',
+            '''if (Build.VERSION.SDK_INT >= 28) {
+            android.view.WindowManager.LayoutParams params = getWindow().getAttributes();
+            params.layoutInDisplayCutoutMode =
+                android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(params);
+        }
+        getWindow().getDecorView().setSystemUiVisibility(''')
           activity.write_text(s)
           gradle=Path("android-port/Android/app/build.gradle")
           s=gradle.read_text().replace('def newApkName = "soh_${buildType}_${gitTag}.apk"','def newApkName = "Veilbound_${buildType}_${gitTag}.apk"')
