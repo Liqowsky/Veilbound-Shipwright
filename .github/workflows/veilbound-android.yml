@@ -98,24 +98,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Use preinstalled Android SDK and install required packages
+      - name: Install Android SDK packages with NDK archive retry
         shell: bash
         run: |
-          set -euxo pipefail
-          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
-          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+          set -euo pipefail
           SDKROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           test -d "$SDKROOT"
-          export ANDROID_HOME="$SDKROOT"
-          export ANDROID_SDK_ROOT="$SDKROOT"
           SDKMANAGER="$SDKROOT/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
-          printf 'y\\n' | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" --install "platforms;android-31" "build-tools;35.0.0" "ndk;26.0.10792818" "cmake;3.31.5"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-31" "build-tools;35.0.0" "cmake;3.31.5"
+          NDKROOT="$SDKROOT/ndk/26.0.10792818"
+          if [ ! -f "$NDKROOT/source.properties" ]; then
+            for attempt in 1 2 3; do
+              echo "Installing NDK 26 attempt $attempt/3"
+              rm -rf "$NDKROOT"
+              if "$SDKMANAGER" --install "ndk;26.0.10792818" && test -f "$NDKROOT/source.properties"; then
+                break
+              fi
+              echo "::warning::NDK download/extraction failed on attempt $attempt; clearing incomplete installation."
+              rm -rf "$NDKROOT"
+              if [ "$attempt" -eq 3 ]; then echo "::error::NDK installation failed three times"; exit 1; fi
+              sleep 8
+            done
+          fi
+          echo "ANDROID SDK and NDK ready"
       - name: Fix Android SDK and NDK paths for Gradle
         shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           SDKROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           NDKROOT="$SDKROOT/ndk/26.0.10792818"
           test -f "$NDKROOT/source.properties"
