@@ -546,9 +546,14 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         if (veilboundFrame < 10000) {
             veilboundFrame++;
         }
-        alpha = (veilboundFrame - 18) * 7;
-        if (alpha < 0) alpha = 0;
-        if (alpha > 255) alpha = 255;
+        // Slow ease-in: the emblem rises from the emerald haze instead of popping in.
+        // Fixed-point smoothstep across 84 frames, without frame-dependent randomness.
+        {
+            s32 t = veilboundFrame - 8;
+            if (t < 0) t = 0;
+            if (t > 84) t = 84;
+            alpha = (255 * t * t * (252 - 2 * t)) / (84 * 84 * 84);
+        }
         pulse = (veilboundFrame / 2) % 90;
         if (pulse > 45) pulse = 90 - pulse;
 
@@ -560,8 +565,15 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-        gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
+        // Emerald aura emerges first; repeated offset silhouette creates breathing glow.
+        // Uses the approved logo alpha, not a rectangular glow plate.
         if (alpha > 0) {
+            s32 halo = (alpha * (38 + pulse / 2)) / 255;
+            gDPSetPrimColor(gfx++, 0, 0, 20, 212, 133, halo);
+            EnMag_DrawImageRGBA32(&gfx, 160 - 1, 105, (u8*)LOGO_TEX, 160, 160);
+            EnMag_DrawImageRGBA32(&gfx, 160 + 1, 105, (u8*)LOGO_TEX, 160, 160);
+            gDPPipeSync(gfx++);
+            gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
@@ -626,6 +638,18 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
             gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            // Soft emerald edge glow behind the gold engraving.
+            gDPSetPrimColor(gfx++, 0, 0, 27, 219, 146, promptAlpha / 3);
+            x = 117;
+            for (n = 0; prompt[n] != 0; ++n) {
+                if (prompt[n] != ' ') {
+                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
+                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
+                        x + 1, 177);
+                }
+                x += 8;
+            }
+            gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 215, 191, 119, promptAlpha);
             x = 117;
             for (n = 0; prompt[n] != 0; ++n) {
@@ -636,8 +660,9 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
                 }
                 x += 8;
             }
+            // The studio mark is a subdued signature, distinct from the active button.
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 137, 204, 158, studioAlpha);
+            gDPSetPrimColor(gfx++, 0, 0, 137, 170, 150, studioAlpha / 2);
             x = 111;
             for (n = 0; studio[n] != 0; ++n) {
                 if (studio[n] != ' ') {
