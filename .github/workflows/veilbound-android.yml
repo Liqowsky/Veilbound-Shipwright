@@ -65,6 +65,11 @@ jobs:
           s=gradle.read_text().replace('def newApkName = "soh_${buildType}_${gitTag}.apk"','def newApkName = "Veilbound_${buildType}_${gitTag}.apk"')
           gradle.write_text(s)
           PY
+      - name: Generate VEILBOUND launcher icon
+        shell: bash
+        run: |
+          sudo apt-get install -y python3-pil fonts-dejavu-core
+          python3 veilbound/tools/create_veilbound_android_icon.py android-port/Android/app/src/main
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
