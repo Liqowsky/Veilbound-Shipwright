@@ -1,0 +1,155 @@
+{
+  "schema": "veilbound.world.v1",
+  "id": "coast_of_dawn",
+  "name": "Wybrzeże Świtu — Pustynia Dwóch Epok",
+  "units": "Blender metres (prototype scale); not yet imported into SoH",
+  "coordinate_system": "X east, Y north, Z up",
+  "world_size_m": [
+    320,
+    260
+  ],
+  "epochs": {
+    "past": {
+      "label": "Pustynne wybrzeże",
+      "climate": "hot desert",
+      "palette": [
+        "sandstone",
+        "golden sand",
+        "turquoise sea"
+      ],
+      "weather": "clear / coastal wind"
+    },
+    "future": {
+      "label": "25 lat później",
+      "climate": "snow-covered desert",
+      "palette": [
+        "ice blue",
+        "chalky snow",
+        "frosted sandstone"
+      ],
+      "weather": "blizzard"
+    }
+  },
+  "landmarks": [
+    {
+      "id": "home",
+      "name": "Dom bohatera",
+      "xy": [
+        42,
+        88
+      ],
+      "radius": 11,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "ruined and snow-buried"
+    },
+    {
+      "id": "village",
+      "name": "Pustynna osada",
+      "xy": [
+        82,
+        22
+      ],
+      "radius": 40,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "abandoned snow-buried"
+    },
+    {
+      "id": "lighthouse",
+      "name": "Latarnia",
+      "xy": [
+        -80,
+        28
+      ],
+      "radius": 12,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "frosted and dark"
+    },
+    {
+      "id": "cave",
+      "name": "Jaskinia pod klifem",
+      "xy": [
+        -49,
+        -56
+      ],
+      "radius": 15,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "ice obstruction"
+    },
+    {
+      "id": "shore",
+      "name": "Brzeg morza",
+      "xy": [
+        -85,
+        -85
+      ],
+      "radius": 34,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "shore ice"
+    },
+    {
+      "id": "dunes",
+      "name": "Szlak wydm",
+      "xy": [
+        100,
+        -80
+      ],
+      "radius": 46,
+      "epochs": [
+        "past",
+        "future"
+      ],
+      "future_state": "snowdrifts"
+    }
+  ],
+  "routes": [
+    [
+      "home",
+      "village"
+    ],
+    [
+      "village",
+      "lighthouse"
+    ],
+    [
+      "village",
+      "dunes"
+    ],
+    [
+      "shore",
+      "cave"
+    ],
+    [
+      "village",
+      "shore"
+    ]
+  ],
+  "narrative_sequence": [
+    "home",
+    "village",
+    "cave",
+    "shore",
+    "future:shore",
+    "future:lighthouse"
+  ],
+  "design_rules": [
+    "Same ground landmarks in both epochs",
+    "No photorealism; stylized exaggerated geometry and hand-painted texture targets",
+    "No gameplay/scene import claimed until actual SoH Android integration verified",
+    "Start press handling unchanged"
+  ]
+}
