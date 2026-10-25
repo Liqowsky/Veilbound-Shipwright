@@ -580,7 +580,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         // slowly upward and fade, never exposing old flame texture tile edges.
         if (veilboundFrame > 4) {
             s32 hazeBase = veilboundFrame - 4;
-            if (hazeBase > 140) hazeBase = 140;
+            if (hazeBase > 235) hazeBase = 235;
             Gfx_SetupDL_39Ptr(&gfx);
             gDPPipeSync(gfx++);
             gDPSetAlphaCompare(gfx++, G_AC_NONE);
@@ -590,9 +590,9 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             for (n = 0; n < 4; ++n) {
                 s32 drift = (veilboundFrame * (n + 1) / 7 + n * 41) % 75;
                 gDPPipeSync(gfx++);
-                gDPSetPrimColor(gfx++, 0, 0, 65, 222, 145, hazeBase / (n + 1));
-                Veilbound_DrawRGBA32Scaled(&gfx, 96 + n * 42 - drift / 4, 95 - drift / 5,
-                                            (u8*)sVeilboundMistTex, 32, 32, 84, 58);
+                gDPSetPrimColor(gfx++, 0, 0, 65, 222, 145, hazeBase / (1 + n / 2));
+                Veilbound_DrawRGBA32Scaled(&gfx, 92 + n * 43 - drift / 4, 96 - drift / 5,
+                                            (u8*)sVeilboundMistTex, 32, 32, 98, 71);
             }
         }
 
@@ -650,13 +650,13 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             // Green lettering/plaque pulse is subtle and linked to the button.
             gDPSetPrimColor(gfx++, 0, 0, 52, 255, 161, appear * (16 + pulse / 2) / 255);
             Veilbound_DrawRGBA32Scaled(&gfx, 159, 184, (u8*)sVeilboundStartButtonTex,
-                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 112, 28);
+                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 92, 24);
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, appear);
             Veilbound_DrawRGBA32Scaled(&gfx, 160, 184, (u8*)sVeilboundStartButtonTex,
-                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 112, 28);
+                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 92, 24);
             // Small non-interactive studio signature below the button.
-            // Retains 2x START behavior from the original game's Update.
+            // File selection now opens on the first START/A/B press.
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 157, 167, 149, appear / 3);
             x = 123;
