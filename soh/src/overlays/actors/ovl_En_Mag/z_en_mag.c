@@ -154,56 +154,25 @@ void EnMag_Update(Actor* thisx, PlayState* play) {
     EnMag* this = (EnMag*)thisx;
     bool isMQ = ResourceMgr_IsGameMasterQuest();
 
-    if (gSaveContext.fileNum != 0xFEDC) {
-        if (this->globalState < MAG_STATE_DISPLAY) {
-            if (CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
-                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
-                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) {
-
-                Audio_PlaySfxGeneral(NA_SE_SY_PIECE_OF_HEART, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
-                                     &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
-
-                // VEILBOUND: one press should open file select even during title reveal.
-                // Transition and fade-out are the same as the normal second press.
-                if (play->transitionTrigger != TRANS_TRIGGER_START) {
-                    Audio_SetCutsceneFlag(0);
-                    gSaveContext.gameMode = GAMEMODE_FILE_SELECT;
-                    play->transitionTrigger = TRANS_TRIGGER_START;
-                    play->transitionType = TRANS_TYPE_FADE_BLACK;
-                }
-                this->copyrightAlphaStep = 15;
-                this->fadeOutAlphaStep = 25;
-                this->globalState = MAG_STATE_FADE_OUT;
-            }
-        } else if (this->globalState >= MAG_STATE_DISPLAY) {
-            // Do not swallow the first press during the old 20-frame wait.
-            if (sDelayTimer == 0 ||
-                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
-                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
-                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) {
-                if (CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
-                    CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
-                    CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) {
-
-                    if (play->transitionTrigger != TRANS_TRIGGER_START) {
-                        Audio_SetCutsceneFlag(0);
-
-                        Audio_PlaySfxGeneral(NA_SE_SY_PIECE_OF_HEART, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
-                                             &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
-
-                        gSaveContext.gameMode = GAMEMODE_FILE_SELECT;
-                        play->transitionTrigger = TRANS_TRIGGER_START;
-                        play->transitionType = TRANS_TYPE_FADE_BLACK;
-                    }
-
-                    this->copyrightAlphaStep = 15;
-                    this->fadeOutAlphaStep = 25;
-                    this->globalState = MAG_STATE_FADE_OUT;
-                }
-            } else {
-                sDelayTimer--;
-            }
-        }
+    // VEILBOUND: one button edge -> file select, regardless of title reveal.
+    // Use one unambiguous transition path; no 20-frame second-press cooldown.
+    if (gSaveContext.fileNum != 0xFEDC &&
+        (CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
+         CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
+         CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) &&
+        play->transitionTrigger != TRANS_TRIGGER_START &&
+        this->globalState != MAG_STATE_FADE_OUT &&
+        this->globalState != MAG_STATE_POST_DISPLAY) {
+        Audio_SetCutsceneFlag(0);
+        Audio_PlaySfxGeneral(NA_SE_SY_PIECE_OF_HEART, &gSfxDefaultPos, 4,
+                             &gSfxDefaultFreqAndVolScale, &gSfxDefaultFreqAndVolScale,
+                             &gSfxDefaultReverb);
+        gSaveContext.gameMode = GAMEMODE_FILE_SELECT;
+        play->transitionTrigger = TRANS_TRIGGER_START;
+        play->transitionType = TRANS_TYPE_FADE_BLACK;
+        this->copyrightAlphaStep = 15;
+        this->fadeOutAlphaStep = 25;
+        this->globalState = MAG_STATE_FADE_OUT;
     }
 
     if (this->globalState == MAG_STATE_FADE_IN) {
