@@ -554,7 +554,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
     gSPSegment(gfx++, 0x06, play->objectCtx.status[this->actor.objBankIndex].segment);
 
     Gfx_SetupDL_39Ptr(&gfx);
-    // VEILBOUND native title. The approved logo comes from the external .o2r texture override.
+    // VEILBOUND native title. The experimental HD logo comes from the separate 512x512 .o2r asset override. This build requires that matching mod.
     // Preserve the game's background and input transitions, without the old OoT flame/subtitles.
     {
         static s32 veilboundFrame = 0;
@@ -614,11 +614,11 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         if (alpha > 0) {
             s32 halo = (alpha * (38 + pulse / 2)) / 255;
             gDPSetPrimColor(gfx++, 0, 0, 20, 212, 133, halo);
-            Veilbound_DrawRGBA32Scaled(&gfx, 159, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
-            Veilbound_DrawRGBA32Scaled(&gfx, 161, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
+            Veilbound_DrawRGBA32Scaled(&gfx, 159, 104, (u8*)LOGO_TEX, 512, 512, 208, 192);
+            Veilbound_DrawRGBA32Scaled(&gfx, 161, 104, (u8*)LOGO_TEX, 512, 512, 208, 192);
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
-            Veilbound_DrawRGBA32Scaled(&gfx, 160, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
+            Veilbound_DrawRGBA32Scaled(&gfx, 160, 104, (u8*)LOGO_TEX, 512, 512, 208, 192);
         }
 
         // Soft antialiased emerald sparks, orbiting the actual logo area.
