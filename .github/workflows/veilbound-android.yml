@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
+      - name: Print build purpose
+        run: echo "VEILBOUND Android - launcher V, immersion, native title touch-to-start"
       - name: Checkout VEILBOUND native title edits
         uses: actions/checkout@v4
         with:
@@ -37,6 +39,9 @@ jobs:
             exit 1
           fi
           echo 'Android audio API compatibility verified before C++ compile'
+      - name: Validate VEILBOUND Android patch scripts
+        run: |
+          python3 -m py_compile veilbound/tools/patch_veilbound_android_ui.py veilbound/tools/create_veilbound_android_icon.py
       - name: VEILBOUND branding and immersive fullscreen
         shell: bash
         run: |
