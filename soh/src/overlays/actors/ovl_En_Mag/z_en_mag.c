@@ -395,6 +395,27 @@ void EnMag_DrawImageRGBA32(Gfx** gfxp, s16 centerX, s16 centerY, const char* sou
     *gfxp = gfx;
 }
 
+// Scale an existing RGBA32 texture on the title screen without changing
+// its allocated texture size or the OoT resource slot dimensions.
+void Veilbound_DrawRGBA32Scaled(Gfx** gfxp, s16 cx, s16 cy, const u8* source,
+                               u32 srcWidth, u32 srcHeight, s16 dstWidth, s16 dstHeight) {
+    Gfx* gfx = *gfxp;
+    s32 left = cx - dstWidth / 2;
+    s32 top = cy - dstHeight / 2;
+    Gfx_SetupDL_56Ptr(&gfx);
+    gDPSetTileCustom(gfx++, G_IM_FMT_RGBA, G_IM_SIZ_32b, srcWidth, srcHeight, 0,
+                     G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP,
+                     G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
+    gDPSetTextureImage(gfx++, G_IM_FMT_RGBA, G_IM_SIZ_32b, srcWidth, source);
+    gDPLoadSync(gfx++);
+    gDPLoadTile(gfx++, G_TX_LOADTILE, 0, 0, (srcWidth - 1) << 2, (srcHeight - 1) << 2);
+    gSPTextureRectangle(gfx++, left << 2, top << 2,
+                        (left + dstWidth) << 2, (top + dstHeight) << 2,
+                        G_TX_RENDERTILE, 0, 0,
+                        (srcWidth << 10) / dstWidth, (srcHeight << 10) / dstHeight);
+    *gfxp = gfx;
+}
+
 void EnMag_DrawCharTexture(Gfx** gfxP, u8* texture, s32 rectLeft, s32 rectTop) {
     Gfx* gfx = *gfxP;
 
@@ -570,7 +591,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         // slowly upward and fade, never exposing old flame texture tile edges.
         if (veilboundFrame > 4) {
             s32 hazeBase = veilboundFrame - 4;
-            if (hazeBase > 90) hazeBase = 90;
+            if (hazeBase > 140) hazeBase = 140;
             Gfx_SetupDL_39Ptr(&gfx);
             gDPPipeSync(gfx++);
             gDPSetAlphaCompare(gfx++, G_AC_NONE);
@@ -580,9 +601,9 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             for (n = 0; n < 4; ++n) {
                 s32 drift = (veilboundFrame * (n + 1) / 7 + n * 41) % 75;
                 gDPPipeSync(gfx++);
-                gDPSetPrimColor(gfx++, 0, 0, 65, 222, 145, hazeBase / (n + 2));
-                EnMag_DrawImageRGBA32(&gfx, 105 + n * 37 - drift / 5, 104 - drift / 4,
-                                      (u8*)sVeilboundMistTex, 32, 32);
+                gDPSetPrimColor(gfx++, 0, 0, 65, 222, 145, hazeBase / (n + 1));
+                Veilbound_DrawRGBA32Scaled(&gfx, 96 + n * 42 - drift / 4, 95 - drift / 5,
+                                            (u8*)sVeilboundMistTex, 32, 32, 84, 58);
             }
         }
 
@@ -593,11 +614,11 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         if (alpha > 0) {
             s32 halo = (alpha * (38 + pulse / 2)) / 255;
             gDPSetPrimColor(gfx++, 0, 0, 20, 212, 133, halo);
-            EnMag_DrawImageRGBA32(&gfx, 160 - 1, 105, (u8*)LOGO_TEX, 160, 160);
-            EnMag_DrawImageRGBA32(&gfx, 160 + 1, 105, (u8*)LOGO_TEX, 160, 160);
+            Veilbound_DrawRGBA32Scaled(&gfx, 159, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
+            Veilbound_DrawRGBA32Scaled(&gfx, 161, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, alpha);
-            EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
+            Veilbound_DrawRGBA32Scaled(&gfx, 160, 104, (u8*)LOGO_TEX, 160, 160, 208, 192);
         }
 
         // Soft antialiased emerald sparks, orbiting the actual logo area.
@@ -639,12 +660,12 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
             // Green lettering/plaque pulse is subtle and linked to the button.
             gDPSetPrimColor(gfx++, 0, 0, 52, 255, 161, appear * (16 + pulse / 2) / 255);
-            EnMag_DrawImageRGBA32(&gfx, 159, 184, (u8*)sVeilboundStartButtonTex,
-                                  VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT);
+            Veilbound_DrawRGBA32Scaled(&gfx, 159, 184, (u8*)sVeilboundStartButtonTex,
+                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 112, 28);
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, appear);
-            EnMag_DrawImageRGBA32(&gfx, 160, 184, (u8*)sVeilboundStartButtonTex,
-                                  VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT);
+            Veilbound_DrawRGBA32Scaled(&gfx, 160, 184, (u8*)sVeilboundStartButtonTex,
+                                       VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 112, 28);
             // Small non-interactive studio signature below the button.
             // Retains 2x START behavior from the original game's Update.
             gDPPipeSync(gfx++);
