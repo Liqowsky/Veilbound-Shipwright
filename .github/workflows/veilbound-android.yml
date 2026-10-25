@@ -1,12 +1,8 @@
 name: VEILBOUND Android APK (experimental)
+# Full native build is deliberately manual until compiler root cause is resolved.
+# Avoid burning 30+ minutes on each workflow edit.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - veilbound/test-lab
-    paths:
-      - 'soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c'
-      - '.github/workflows/veilbound-android.yml'
 permissions:
   contents: read
 jobs:
