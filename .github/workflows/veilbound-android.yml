@@ -74,6 +74,10 @@ jobs:
           s=gradle.read_text().replace('def newApkName = "soh_${buildType}_${gitTag}.apk"','def newApkName = "Veilbound_${buildType}_${gitTag}.apk"')
           gradle.write_text(s)
           PY
+      - name: Integrate tap-to-start title screen controls
+        shell: bash
+        run: |
+          python3 veilbound/tools/patch_veilbound_android_ui.py android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
       - name: Generate VEILBOUND launcher icon
         shell: bash
         run: |
