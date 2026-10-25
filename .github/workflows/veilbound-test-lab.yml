@@ -21,6 +21,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Generate native title texture header
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pil fonts-dejavu-core
+          python3 tools/veilbound_build_title_art.py --header soh/src/overlays/actors/ovl_En_Mag/veilbound_title_button.h --master-dir build-veilbound-title-source
       - name: Validate native title integration
         run: |
           python3 -m py_compile tests/veilbound_title_guard.py
