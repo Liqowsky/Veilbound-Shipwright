@@ -7,6 +7,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import math
 import argparse
+import base64
+import io
 
 def font(size):
     paths = [
@@ -99,10 +101,14 @@ if __name__=="__main__":
     ap.add_argument("--master-dir",required=True)
     opts=ap.parse_args()
     dest=Path(opts.master_dir);dest.mkdir(parents=True,exist_ok=True)
-    m=master();m.save(dest/"VEILBOUND_press_start_4k_master.png")
-    b=m.crop((1020,870,2820,1330)).resize((144,36),Image.Resampling.LANCZOS)
+    source=Path(__file__).resolve().parent/"assets"/"veilbound_press_start_generated_144.png.b64"
+    if not source.exists():
+        raise SystemExit("Missing actual generated PRESS START art")
+    b=Image.open(io.BytesIO(base64.b64decode(source.read_text().strip()))).convert("RGBA")
+    assert b.size==(144,36), "Wrong PRESS START dimensions"
+    b.resize((1152,288),Image.Resampling.LANCZOS).save(dest/"VEILBOUND_press_start_generated_preview.png")
     mist_img=mist()
     mist_img.resize((512,512),Image.Resampling.LANCZOS).save(dest/"VEILBOUND_emerald_mist_512.png")
-    b.resize((1152,288),Image.Resampling.NEAREST).save(dest/"VEILBOUND_button_native_preview.png")
+    b.save(dest/"VEILBOUND_button_native_preview.png")
     write_header(Path(opts.header),b,mist_img)
     print("Generated source 3840x2160, native RGBA32 button 144x36, and alpha-smoke 32x32:",opts.header)
