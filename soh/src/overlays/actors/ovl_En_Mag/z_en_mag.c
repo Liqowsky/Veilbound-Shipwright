@@ -602,6 +602,31 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             }
         }
 
+        // Slow floating emerald crystals along the chain and emblem.
+        // The dedicated RGBA sprite is authored separately from sparkle pixels.
+        if (veilboundFrame > 42) {
+            s32 i;
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            for (i = 0; i < 6; ++i) {
+                s32 phase = (veilboundFrame + i * 47) % 190;
+                s32 px = 118 + ((i * 29) % 96) + (phase / 32) % 5;
+                s32 py = 62 + ((i * 17) % 70) - (phase / 18);
+                s32 glow = phase < 30 ? phase * 6 : (phase > 158 ? (190 - phase) * 5 : 170);
+                if (glow > 175) glow = 175;
+                if (glow > 0) {
+                    gDPPipeSync(gfx++);
+                    gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, glow);
+                    Veilbound_DrawRGBA32Scaled(&gfx, px, py, (u8*)sVeilboundCrystalTex, 16, 24,
+                                                5 + (i % 2), 9 + (i % 3));
+                }
+            }
+        }
+
         // Subtitle is already baked into the approved logo texture.
         // Do not draw a second, oversized "ECHOES OF THE FIRST RIFT".
 
