@@ -64,6 +64,18 @@ def mist():
             pix[x,y]=(19,204,132, max(0,min(255,alpha)))
     return im
 
+def spark():
+    im=Image.new("RGBA",(8,8),(0,0,0,0))
+    px=im.load()
+    for y in range(8):
+        for x in range(8):
+            dx=abs(x-3.5);dy=abs(y-3.5)
+            energy=max(0.0, 1.0-0.36*(dx+dy))
+            cross=max(0.0, 1.0-min(dx,dy)*1.25) * max(0.0,1.0-(max(dx,dy)/4.0))
+            a=round(235*max(energy**3,cross*.75))
+            px[x,y]=(110,255,184,max(0,min(255,a)))
+    return im
+
 def write_header(path, btn, haze):
     def arr(name,im):
         data=list(im.tobytes())
@@ -76,6 +88,7 @@ def write_header(path, btn, haze):
     header+="#define VEILBOUND_BUTTON_WIDTH 144\n#define VEILBOUND_BUTTON_HEIGHT 36\n"
     header+=arr("sVeilboundStartButtonTex",btn)
     header+=arr("sVeilboundMistTex",haze)
+    header+=arr("sVeilboundSparkTex", spark())
     header+="#endif\n"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(header)
