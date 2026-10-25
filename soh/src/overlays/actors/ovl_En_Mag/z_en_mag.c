@@ -649,11 +649,11 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
             // Green lettering/plaque pulse is subtle and linked to the button.
             gDPSetPrimColor(gfx++, 0, 0, 52, 255, 161, appear * (16 + pulse / 2) / 255);
-            Veilbound_DrawRGBA32Scaled(&gfx, 159, 184, (u8*)sVeilboundStartButtonTex,
+            Veilbound_DrawRGBA32Scaled(&gfx, 159, 177, (u8*)sVeilboundStartButtonTex,
                                        VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 92, 24);
             gDPPipeSync(gfx++);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, appear);
-            Veilbound_DrawRGBA32Scaled(&gfx, 160, 184, (u8*)sVeilboundStartButtonTex,
+            Veilbound_DrawRGBA32Scaled(&gfx, 160, 177, (u8*)sVeilboundStartButtonTex,
                                        VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT, 92, 24);
             // Small non-interactive studio signature below the button.
             // File selection now opens on the first START/A/B press.
@@ -664,7 +664,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
                 if (studio[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 213);
+                        x, 198);
                 }
                 x += 6;
             }
