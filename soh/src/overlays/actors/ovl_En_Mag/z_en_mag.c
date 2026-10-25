@@ -9,6 +9,7 @@
 #include <soh/GameVersions.h>
 #include "soh/ResourceManagerHelpers.h"
 #include <string.h>
+#include "veilbound_title_button.h"
 
 #define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED)
 
@@ -565,6 +566,26 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+        // Soft RGBA emerald smoke behind the logo. Organic particles move
+        // slowly upward and fade, never exposing old flame texture tile edges.
+        if (veilboundFrame > 4) {
+            s32 hazeBase = veilboundFrame - 4;
+            if (hazeBase > 90) hazeBase = 90;
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            for (n = 0; n < 4; ++n) {
+                s32 drift = (veilboundFrame * (n + 1) / 7 + n * 41) % 75;
+                gDPPipeSync(gfx++);
+                gDPSetPrimColor(gfx++, 0, 0, 65, 222, 145, hazeBase / (n + 2));
+                EnMag_DrawImageRGBA32(&gfx, 105 + n * 37 - drift / 5, 104 - drift / 4,
+                                      (u8*)sVeilboundMistTex, 32, 32);
+            }
+        }
+
         // The previous flame texture was a repeating tile, not smoke.
         // Remove it until a real transparent smoke texture is registered.
         // Emerald aura emerges first; repeated offset silhouette creates breathing glow.
@@ -600,77 +621,35 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         // Subtitle is already baked into the approved logo texture.
         // Do not draw a second, oversized "ECHOES OF THE FIRST RIFT".
 
-        // Separate gold start medallion and quiet studio signature.
-        // Buttons still use the game's existing two-stage input logic.
+        // True antialiased button artwork rasterized from a 3840x2160 master
+        // at build time, not a text drawn with OoT's 16px glyphs.
         if (veilboundFrame > 85) {
-            s32 x0 = 88, x1 = 232, y0 = 171, y1 = 202;
             s32 appear = (veilboundFrame - 85) * 8;
-            u32 packed;
             if (appear > 255) appear = 255;
-            promptAlpha = 176 + pulse;
-            if (promptAlpha > 235) promptAlpha = 235;
-            gDPPipeSync(gfx++);
-            gDPSetCycleType(gfx++, G_CYC_FILL);
-            // Warm bronze outer trim and layered beveled edges.
-            packed = GPACK_RGBA5551(87, 61, 32, 1);
-            gDPSetFillColor(gfx++, (packed << 16) | packed);
-            gDPFillRectangle(gfx++, x0 + 2, y0, x1 - 2, y1);
-            packed = GPACK_RGBA5551(210, 156, 69, 1);
-            gDPSetFillColor(gfx++, (packed << 16) | packed);
-            gDPFillRectangle(gfx++, x0 + 5, y0 + 2, x1 - 5, y0 + 3);
-            gDPFillRectangle(gfx++, x0 + 5, y1 - 3, x1 - 5, y1 - 2);
-            gDPFillRectangle(gfx++, x0 + 3, y0 + 4, x0 + 4, y1 - 4);
-            gDPFillRectangle(gfx++, x1 - 4, y0 + 4, x1 - 3, y1 - 4);
-            packed = GPACK_RGBA5551(16, 31, 27, 1);
-            gDPSetFillColor(gfx++, (packed << 16) | packed);
-            gDPFillRectangle(gfx++, x0 + 6, y0 + 5, x1 - 6, y1 - 5);
-            packed = GPACK_RGBA5551(28, 105, 79, 1);
-            gDPSetFillColor(gfx++, (packed << 16) | packed);
-            gDPFillRectangle(gfx++, x0 + 9, y0 + 7, x1 - 9, y0 + 7);
-            gDPFillRectangle(gfx++, x0 + 9, y1 - 7, x1 - 9, y1 - 7);
-            // Emerald gems at each end; tiny highlight gives a polished finish.
-            packed = GPACK_RGBA5551(14, 186, 126, 1);
-            gDPSetFillColor(gfx++, (packed << 16) | packed);
-            gDPFillRectangle(gfx++, x0, y0 + 13, x0 + 7, y0 + 17);
-            gDPFillRectangle(gfx++, x1 - 7, y0 + 13, x1, y0 + 17);
             Gfx_SetupDL_39Ptr(&gfx);
             gDPPipeSync(gfx++);
-            gDPSetCycleType(gfx++, G_CYC_1CYCLE);
             gDPSetAlphaCompare(gfx++, G_AC_NONE);
             gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
             gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-            // Emerald glow follows the letters, then crisp warm-gold lettering.
-            gDPSetPrimColor(gfx++, 0, 0, 35, 225, 134, appear / 3);
-            x = 117;
-            for (n = 0; prompt[n] != 0; ++n) {
-                if (prompt[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x + 1, 183);
-                }
-                x += 8;
-            }
+            // Green lettering/plaque pulse is subtle and linked to the button.
+            gDPSetPrimColor(gfx++, 0, 0, 52, 255, 161, appear * (16 + pulse / 2) / 255);
+            EnMag_DrawImageRGBA32(&gfx, 159, 184, (u8*)sVeilboundStartButtonTex,
+                                  VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT);
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 237, 197, 111, appear * promptAlpha / 255);
-            x = 117;
-            for (n = 0; prompt[n] != 0; ++n) {
-                if (prompt[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 182);
-                }
-                x += 8;
-            }
-            // Credit below the button, no plaque, deliberately low contrast.
+            gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, appear);
+            EnMag_DrawImageRGBA32(&gfx, 160, 184, (u8*)sVeilboundStartButtonTex,
+                                  VEILBOUND_BUTTON_WIDTH, VEILBOUND_BUTTON_HEIGHT);
+            // Small non-interactive studio signature below the button.
+            // Retains 2x START behavior from the original game's Update.
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 159, 170, 152, appear / 3);
+            gDPSetPrimColor(gfx++, 0, 0, 157, 167, 149, appear / 3);
             x = 123;
             for (n = 0; studio[n] != 0; ++n) {
                 if (studio[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 214);
+                        x, 213);
                 }
                 x += 6;
             }
