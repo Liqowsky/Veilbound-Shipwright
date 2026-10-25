@@ -21,6 +21,13 @@ def icon(n):
 for suffix,side in [("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdpi",192)]:
     p=root/"res"/("mipmap-"+suffix)/"ic_launcher.png"
     p.parent.mkdir(parents=True,exist_ok=True)
+    # Android treats PNG and WebP with the same stem as duplicate resources.
+    # Remove all old Shipwright variants before writing the VEILBOUND icons.
+    for stem in ("ic_launcher", "ic_launcher_foreground"):
+        for ext in ("png", "webp", "jpg", "jpeg"):
+            old=p.parent/(stem+"."+ext)
+            if old.exists():
+                old.unlink()
     icon(side).save(p)
     icon(side).save(p.with_name("ic_launcher_foreground.png"))
 icon(512).save(root/"veilbound_launcher_master_512.png")
