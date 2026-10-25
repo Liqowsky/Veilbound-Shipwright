@@ -1,1 +1,1 @@
-Android build request: single START/A/B opens file select with no double press and no 20-frame cooldown. Native code 9822cca0fdfd5cb02c31315806864d574194804d. Experimental HD 512x512 logo mod is separately required by this actor build. Build requested 2026-10-25.
+Build VEILBOUND Android unified title revision 2026-10-25: one-press file select (9822cca), fog visible, spark sprites, 92x24 start plaque (ef944b4), companion 512x512 HD logo mod with contrast subtitle produced separately. Use VEILBOUND_HD_512_SUBTITLE_FIXED.o2r in place of previous logo mod.
