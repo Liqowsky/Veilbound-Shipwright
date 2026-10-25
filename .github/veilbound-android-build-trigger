@@ -1,1 +1,1 @@
-Retry Android APK following YAML parser failure on workflow line 56. Fixed indentation in embedded Python/Java block at fb908de759f6ca117825f2c48e2eab1a3db534f4. Build Veilbound branding, immersive screen and title touch-to-start.
+Retry VEILBOUND Android following duplicate resource error at mergeDebugResources: launcher icons .webp conflicted with generated .png. Fixed by removing all ic_launcher/ic_launcher_foreground PNG/WebP variants per density before generating new art. Fix commit e07e42f26485cd6fa7e13a0b483ae23f70414067.
