@@ -1,0 +1,1 @@
+Build request: 2026-10-25. Audio API compatibility fix for Android (Audio_PlaySfxGeneral -> Audio_PlaySoundGeneral) verified against uploaded error log.
