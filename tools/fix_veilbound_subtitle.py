@@ -1,44 +1,35 @@
 #!/usr/bin/env python3
-"""Fix the baked duplicate/low-contrast subtitle in an existing Veilbound 512x512 O2R.
-Keeps the original 512x512 resource header and all other mod resources unchanged.
-Run with: python tools/fix_veilbound_subtitle.py --input current.o2r --output fixed.o2r
-Requires Pillow and DejaVuSerifCondensed-Bold font.
+"""Rebuild the HD 512x512 logo mod with ONE subtitle plaque below the emblem.
+Requires original transparent wordmark PNG and an existing 512x512 SoH O2R.
 """
-import argparse
-import zipfile
-from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
-
-parser=argparse.ArgumentParser()
-parser.add_argument("--input",required=True)
-parser.add_argument("--output",required=True)
-a=parser.parse_args()
+import argparse,zipfile
+from PIL import Image,ImageDraw,ImageFont
+p=argparse.ArgumentParser()
+p.add_argument("--input",required=True)
+p.add_argument("--logo",required=True)
+p.add_argument("--output",required=True)
+p.add_argument("--preview")
+a=p.parse_args()
 key="objects/object_mag/gTitleZeldaShieldLogoTex"
-with zipfile.ZipFile(a.input) as source:
-    blobs={name:source.read(name) for name in source.namelist()}
-data=blobs[key]
-if len(data)!=80+512*512*4:
-    raise SystemExit("Requires existing 512x512 RGBA32 logo texture; refusing mismatched format")
-im=Image.frombytes("RGBA",(512,512),data[80:])
-overlay=Image.new("RGBA",(512,512),(0,0,0,0))
-draw=ImageDraw.Draw(overlay)
-draw.rounded_rectangle((23,279,407,320),radius=9,fill=(10,21,22,244),outline=(194,145,68,235),width=2)
-draw.line((31,284,399,284),fill=(46,127,92,220),width=1)
-draw.line((31,315,399,315),fill=(112,79,39,170),width=1)
-font_candidates=["/usr/share/fonts/truetype/dejavu/DejaVuSerifCondensed-Bold.ttf",
-                 "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"]
-font_file=next((p for p in font_candidates if Path(p).exists()),None)
-if not font_file:
-    raise SystemExit("Install fonts-dejavu-core")
-font=ImageFont.truetype(font_file,24)
-label="ECHOES OF THE FIRST RIFT"
-bounds=draw.textbbox((0,0),label,font=font,stroke_width=1)
-x=(430-(bounds[2]-bounds[0]))//2+1
-draw.text((x+1,286),label,font=font,fill=(19,10,5,255),stroke_width=2,stroke_fill=(0,0,0,255))
-draw.text((x,285),label,font=font,fill=(242,206,121,255),stroke_width=1,stroke_fill=(94,62,28,255))
-im=Image.alpha_composite(im,overlay)
-blobs[key]=data[:80]+im.tobytes()
-with zipfile.ZipFile(a.output,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as target:
-    for name,blob in blobs.items():
-        target.writestr(name,blob)
-print("Produced 512x512 logo mod with separated, legible subtitle:",a.output)
+with zipfile.ZipFile(a.input) as z: blobs={name:z.read(name) for name in z.namelist()}
+if len(blobs[key])!=80+512*512*4:raise SystemExit("Expected RGBA32 512x512 texture; aborting")
+source=Image.open(a.logo).convert("RGBA")
+bbox=source.getbbox()
+if bbox is None:raise SystemExit("Empty logo")
+logo=source.crop(bbox);logo.thumbnail((495,270),Image.Resampling.LANCZOS)
+canvas=Image.new("RGBA",(512,512),(0,0,0,0))
+canvas.alpha_composite(logo,((512-logo.width)//2,65))
+d=ImageDraw.Draw(canvas)
+d.rounded_rectangle((38,354,474,404),radius=9,fill=(8,23,22,245),outline=(208,156,79,245),width=3)
+d.rounded_rectangle((43,359,469,399),radius=6,outline=(38,112,84,200),width=1)
+font=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSerifCondensed-Bold.ttf",25)
+text="ECHOES OF THE FIRST RIFT"
+bb=d.textbbox((0,0),text,font=font,stroke_width=1)
+x=(512-(bb[2]-bb[0]))//2
+d.text((x+1,361),text,font=font,fill=(30,16,10,255),stroke_width=2,stroke_fill=(2,3,3,255))
+d.text((x,360),text,font=font,fill=(242,207,133,255),stroke_width=1,stroke_fill=(121,78,31,255))
+blobs[key]=blobs[key][:80]+canvas.tobytes()
+with zipfile.ZipFile(a.output,"w",zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+    for name,data in blobs.items():z.writestr(name,data)
+if a.preview:canvas.save(a.preview)
+print("Rebuilt separated subtitle from clean logo:",a.output)
