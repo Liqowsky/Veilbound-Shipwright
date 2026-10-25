@@ -163,32 +163,17 @@ void EnMag_Update(Actor* thisx, PlayState* play) {
                 Audio_PlaySfxGeneral(NA_SE_SY_PIECE_OF_HEART, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                      &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
 
-                this->mainAlpha = 210;
-                this->subAlpha = 255;
-                this->copyrightAlpha = 255;
-
-                this->effectPrimLodFrac = 128.0f;
-                this->effectAlpha = 255.0f;
-
-                if (!isMQ) {
-                    this->effectPrimColor[0] = 255.0f;
-                    this->effectPrimColor[1] = 255.0f;
-                    this->effectPrimColor[2] = 170;
-                    this->effectEnvColor[0] = 255.0f;
-                    this->effectEnvColor[1] = 100;
-                } else {
-                    this->effectPrimColor[0] = 170;
-                    this->effectPrimColor[1] = 255.0f;
-                    this->effectPrimColor[2] = 255.0f;
-                    this->effectEnvColor[0] = 200.0f;
-                    this->effectEnvColor[1] = 255.0f;
-                    this->effectEnvColor[2] = 0;
+                // VEILBOUND: one press should open file select even during title reveal.
+                // Transition and fade-out are the same as the normal second press.
+                if (play->transitionTrigger != TRANS_TRIGGER_START) {
+                    Audio_SetCutsceneFlag(0);
+                    gSaveContext.gameMode = GAMEMODE_FILE_SELECT;
+                    play->transitionTrigger = TRANS_TRIGGER_START;
+                    play->transitionType = TRANS_TYPE_FADE_BLACK;
                 }
-
-                this->globalState = MAG_STATE_DISPLAY;
-                sDelayTimer = 20;
-                gSaveContext.transFadeDuration = 1;
-                gSaveContext.transWipeSpeed = 255;
+                this->copyrightAlphaStep = 15;
+                this->fadeOutAlphaStep = 25;
+                this->globalState = MAG_STATE_FADE_OUT;
             }
         } else if (this->globalState >= MAG_STATE_DISPLAY) {
             if (sDelayTimer == 0) {
