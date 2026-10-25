@@ -41,7 +41,7 @@ jobs:
           echo 'Android audio API compatibility verified before C++ compile'
       - name: Validate VEILBOUND Android patch scripts
         run: |
-          python3 -m py_compile veilbound/tools/patch_veilbound_android_ui.py veilbound/tools/create_veilbound_android_icon.py
+          python3 -m py_compile veilbound/tools/patch_veilbound_android_ui.py veilbound/tools/create_veilbound_android_icon.py veilbound/tools/patch_veilbound_immersive.py
       - name: VEILBOUND branding and immersive fullscreen
         shell: bash
         run: |
@@ -83,6 +83,11 @@ jobs:
         shell: bash
         run: |
           python3 veilbound/tools/patch_veilbound_android_ui.py android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
+      - name: Enforce immersive mode after SDL window focus
+        shell: bash
+        run: |
+          python3 veilbound/tools/patch_veilbound_immersive.py android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
+          grep -q 'veilboundApplyImmersiveFullscreen' android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
       - name: Generate VEILBOUND launcher icon
         shell: bash
         run: |
