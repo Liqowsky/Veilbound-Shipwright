@@ -600,22 +600,27 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
-        // Glints anchored to the medallion and chain, not below the title.
+        // Soft antialiased emerald sparks, orbiting the actual logo area.
         if (veilboundFrame > 28) {
             s32 i;
+            Gfx_SetupDL_39Ptr(&gfx);
             gDPPipeSync(gfx++);
-            gDPSetCycleType(gfx++, G_CYC_FILL);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
             for (i = 0; i < 11; ++i) {
                 s32 phase = (veilboundFrame * (1 + i % 3) + i * 23) % 140;
                 s32 px = 132 + ((i * 17) % 80);
                 s32 py = 78 + ((i * 19) % 55) - phase / 12;
-                if (phase > 30 && phase < 108 && px > 0 && px < 318 && py > 0 && py < 235) {
-                    u32 packed = GPACK_RGBA5551(49, 224, 160, 1);
-                    gDPSetFillColor(gfx++, (packed << 16) | packed);
-                    gDPFillRectangle(gfx++, px, py, px + 1, py + 1);
+                if (phase > 30 && phase < 108) {
+                    s32 strength = phase < 50 ? (phase - 30) * 9 : (phase > 89 ? (108 - phase) * 9 : 170);
+                    if (strength > 170) strength = 170;
+                    gDPPipeSync(gfx++);
+                    gDPSetPrimColor(gfx++, 0, 0, 115, 255, 189, strength);
+                    EnMag_DrawImageRGBA32(&gfx, px, py, (u8*)sVeilboundSparkTex, 8, 8);
                 }
             }
-            Gfx_SetupDL_39Ptr(&gfx);
         }
 
         // Subtitle is already baked into the approved logo texture.
