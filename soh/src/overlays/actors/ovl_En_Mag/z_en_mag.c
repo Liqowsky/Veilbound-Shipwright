@@ -565,30 +565,8 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
         gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                           0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-        // Animated emerald vapour from the existing 32x32 flame texture.
-        // Small, slow parallax passes appear before the emblem is fully visible.
-        // Uses the original I8 texture; no missing external HD asset dependency.
-        if (veilboundFrame > 4) {
-            s32 mistAlpha = (veilboundFrame - 4) * 3;
-            s32 drift;
-            if (mistAlpha > 62) mistAlpha = 62;
-            Gfx_SetupDL_39Ptr(&gfx);
-            gDPPipeSync(gfx++);
-            gDPSetCycleType(gfx++, G_CYC_1CYCLE);
-            gDPSetAlphaCompare(gfx++, G_AC_NONE);
-            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
-                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-            for (n = 0; n < 4; ++n) {
-                drift = ((veilboundFrame * (n + 2) / 8 + n * 37) % 96);
-                gDPPipeSync(gfx++);
-                gDPSetPrimColor(gfx++, 0, 0, 14, 173 + n * 12, 113, mistAlpha / (n + 1));
-                EnMag_DrawTextureI8(&gfx, gTitleFlameEffectTex, 32, 32,
-                                   68 + n * 43 - drift / 3, 110 + n * 12 - drift / 6,
-                                   85, 44, 384, 745);
-            }
-        }
-
+        // The previous flame texture was a repeating tile, not smoke.
+        // Remove it until a real transparent smoke texture is registered.
         // Emerald aura emerges first; repeated offset silhouette creates breathing glow.
         // Uses the approved logo alpha, not a rectangular glow plate.
         if (alpha > 0) {
@@ -601,26 +579,24 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
-        // Tiny glints drifting up from the medallion. Deterministic positions,
-        // no allocation, no RNG and no game-state/input changes.
+        // Emerald glints: thin tapered primitives, no tiled texture artifacts.
         if (veilboundFrame > 28) {
-            Gfx_SetupDL_39Ptr(&gfx);
+            s32 i;
             gDPPipeSync(gfx++);
-            gDPSetAlphaCompare(gfx++, G_AC_NONE);
-            gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
-            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
-                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-            for (n = 0; n < 13; ++n) {
-                s32 phase = (veilboundFrame * (2 + (n % 3)) + n * 31) % 150;
-                s32 px = 113 + (n * 47 % 98) + ((phase / 17) % 5) - 2;
-                s32 py = 150 - phase / 3 + (n * 11 % 20);
-                s32 a = (phase < 20 ? phase * 6 : (phase > 115 ? (150 - phase) * 3 : 100));
-                if (a > 110) a = 110;
-                gDPPipeSync(gfx++);
-                gDPSetPrimColor(gfx++, 0, 0, 102, 252, 173, a);
-                EnMag_DrawTextureI8(&gfx, gTitleFlameEffectTex, 32, 32,
-                                   px, py, 5 + (n % 3), 5 + (n % 3), 4096, 4096);
+            gDPSetCycleType(gfx++, G_CYC_FILL);
+            for (i = 0; i < 11; ++i) {
+                s32 phase = (veilboundFrame * (1 + i % 3) + i * 23) % 140;
+                s32 px = 115 + ((i * 43) % 92);
+                s32 py = 158 - phase / 3 + ((i * 11) % 16);
+                s32 intensity = phase < 20 ? 20 + phase * 5 : (phase > 110 ? 20 : 115);
+                // Tiny twinkles: never the original 8x8 green tile.
+                if (intensity > 70 && px > 0 && px < 318 && py > 0 && py < 238) {
+                    u32 packed = GPACK_RGBA5551(28, 235, 147, 1);
+                    gDPSetFillColor(gfx++, (packed << 16) | packed);
+                    gDPFillRectangle(gfx++, px, py, px + 1, py + 2);
+                }
             }
+            Gfx_SetupDL_39Ptr(&gfx);
         }
 
         // VEILBOUND: gilded subtitle replaces Ocarina of Time (no legacy title overlays).
@@ -653,30 +629,39 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             }
         }
 
-        // VEILBOUND: one engraved bronze-and-emerald plaque for the start action.
-        // This replaces both the original red prompt and the detached studio credit.
-        // Uses native RDP primitives and the title font, without requiring an Android APK.
+        // Separate gold start medallion and quiet studio signature.
+        // Buttons still use the game's existing two-stage input logic.
         if (veilboundFrame > 85) {
-            s32 x0 = 91;
-            s32 x1 = 229;
-            s32 y0 = 167;
-            s32 y1 = 212;
-            s32 studioAlpha = alpha * 3 / 4;
-            promptAlpha = 160 + pulse * 2;
-            if (promptAlpha > 250) promptAlpha = 250;
+            s32 x0 = 88, x1 = 232, y0 = 171, y1 = 202;
+            s32 appear = (veilboundFrame - 85) * 8;
+            u32 packed;
+            if (appear > 255) appear = 255;
+            promptAlpha = 176 + pulse;
+            if (promptAlpha > 235) promptAlpha = 235;
             gDPPipeSync(gfx++);
             gDPSetCycleType(gfx++, G_CYC_FILL);
-            gDPSetFillColor(gfx++, (GPACK_RGBA5551(20, 31, 27, 1) << 16) | GPACK_RGBA5551(20, 31, 27, 1));
-            gDPFillRectangle(gfx++, x0, y0, x1, y1);
-            gDPSetFillColor(gfx++, (GPACK_RGBA5551(141, 103, 49, 1) << 16) | GPACK_RGBA5551(141, 103, 49, 1));
-            gDPFillRectangle(gfx++, x0 + 1, y0 + 1, x1 - 1, y0 + 3);
-            gDPFillRectangle(gfx++, x0 + 1, y1 - 3, x1 - 1, y1 - 1);
-            gDPFillRectangle(gfx++, x0 + 1, y0 + 1, x0 + 3, y1 - 1);
-            gDPFillRectangle(gfx++, x1 - 3, y0 + 1, x1 - 1, y1 - 1);
-            gDPSetFillColor(gfx++, (GPACK_RGBA5551(11, 92, 63, 1) << 16) | GPACK_RGBA5551(11, 92, 63, 1));
-            gDPFillRectangle(gfx++, x0 + 6, y0 + 6, x1 - 6, y0 + 7);
-            gDPFillRectangle(gfx++, x0 + 6, y1 - 7, x1 - 6, y1 - 6);
-
+            // Warm bronze outer trim and layered beveled edges.
+            packed = GPACK_RGBA5551(87, 61, 32, 1);
+            gDPSetFillColor(gfx++, (packed << 16) | packed);
+            gDPFillRectangle(gfx++, x0 + 2, y0, x1 - 2, y1);
+            packed = GPACK_RGBA5551(210, 156, 69, 1);
+            gDPSetFillColor(gfx++, (packed << 16) | packed);
+            gDPFillRectangle(gfx++, x0 + 5, y0 + 2, x1 - 5, y0 + 3);
+            gDPFillRectangle(gfx++, x0 + 5, y1 - 3, x1 - 5, y1 - 2);
+            gDPFillRectangle(gfx++, x0 + 3, y0 + 4, x0 + 4, y1 - 4);
+            gDPFillRectangle(gfx++, x1 - 4, y0 + 4, x1 - 3, y1 - 4);
+            packed = GPACK_RGBA5551(16, 31, 27, 1);
+            gDPSetFillColor(gfx++, (packed << 16) | packed);
+            gDPFillRectangle(gfx++, x0 + 6, y0 + 5, x1 - 6, y1 - 5);
+            packed = GPACK_RGBA5551(28, 105, 79, 1);
+            gDPSetFillColor(gfx++, (packed << 16) | packed);
+            gDPFillRectangle(gfx++, x0 + 9, y0 + 7, x1 - 9, y0 + 7);
+            gDPFillRectangle(gfx++, x0 + 9, y1 - 7, x1 - 9, y1 - 7);
+            // Emerald gems at each end; tiny highlight gives a polished finish.
+            packed = GPACK_RGBA5551(14, 186, 126, 1);
+            gDPSetFillColor(gfx++, (packed << 16) | packed);
+            gDPFillRectangle(gfx++, x0, y0 + 13, x0 + 7, y0 + 17);
+            gDPFillRectangle(gfx++, x1 - 7, y0 + 13, x1, y0 + 17);
             Gfx_SetupDL_39Ptr(&gfx);
             gDPPipeSync(gfx++);
             gDPSetCycleType(gfx++, G_CYC_1CYCLE);
@@ -684,39 +669,39 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             gDPSetRenderMode(gfx++, G_RM_XLU_SURF, G_RM_XLU_SURF2);
             gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
-            // Soft emerald edge glow behind the gold engraving.
-            gDPSetPrimColor(gfx++, 0, 0, 27, 219, 146, promptAlpha / 3);
+            // Emerald glow follows the letters, then crisp warm-gold lettering.
+            gDPSetPrimColor(gfx++, 0, 0, 35, 225, 134, appear / 3);
             x = 117;
             for (n = 0; prompt[n] != 0; ++n) {
                 if (prompt[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x + 1, 177);
+                        x + 1, 183);
                 }
                 x += 8;
             }
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 215, 191, 119, promptAlpha);
+            gDPSetPrimColor(gfx++, 0, 0, 237, 197, 111, appear * promptAlpha / 255);
             x = 117;
             for (n = 0; prompt[n] != 0; ++n) {
                 if (prompt[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (prompt[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 176);
+                        x, 182);
                 }
                 x += 8;
             }
-            // The studio mark is a subdued signature, distinct from the active button.
+            // Credit below the button, no plaque, deliberately low contrast.
             gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 137, 170, 150, studioAlpha / 2);
-            x = 111;
+            gDPSetPrimColor(gfx++, 0, 0, 159, 170, 152, appear / 3);
+            x = 123;
             for (n = 0; studio[n] != 0; ++n) {
                 if (studio[n] != ' ') {
                     EnMag_DrawCharTexture(&gfx, font->fontBuf +
                         (studio[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 198);
+                        x, 214);
                 }
-                x += 8;
+                x += 6;
             }
         }
     }
