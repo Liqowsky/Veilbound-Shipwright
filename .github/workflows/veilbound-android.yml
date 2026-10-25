@@ -24,7 +24,15 @@ jobs:
       - name: Copy only VEILBOUND title actor into port
         run: |
           cp veilbound/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
+          # The Android port's title actor API uses Audio_PlaySoundGeneral.
+          # This is the only known compile blocker in the uploaded 22,887-line log.
+          sed -i 's/Audio_PlaySfxGeneral(/Audio_PlaySoundGeneral(/g' android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
           grep -q 'VEILBOUND native title' android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c
+          if grep -q 'Audio_PlaySfxGeneral(' android-port/soh/src/overlays/actors/ovl_En_Mag/z_en_mag.c; then
+            echo 'ERROR: incompatible sound function remains in Android title actor'
+            exit 1
+          fi
+          echo 'Android audio API compatibility verified before C++ compile'
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
