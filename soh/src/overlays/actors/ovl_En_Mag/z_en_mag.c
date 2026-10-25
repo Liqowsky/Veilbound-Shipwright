@@ -10,6 +10,29 @@
 #include "soh/ResourceManagerHelpers.h"
 #include <string.h>
 #include "veilbound_title_button.h"
+#if defined(__ANDROID__)
+#include <jni.h>
+#include <SDL.h>
+static void Veilbound_SetAndroidTitleTouch(bool active) {
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (env == NULL) return;
+    jobject activity = SDL_AndroidGetActivity();
+    if (activity == NULL) return;
+    jclass cls = (*env)->GetObjectClass(env, activity);
+    if (cls != NULL) {
+        jmethodID method = (*env)->GetMethodID(env, cls, "setVeilboundTitleUiActive", "(Z)V");
+        if (method != NULL) {
+            (*env)->CallVoidMethod(env, activity, method, active ? JNI_TRUE : JNI_FALSE);
+        }
+        if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, cls);
+    }
+    (*env)->DeleteLocalRef(env, activity);
+}
+#else
+static void Veilbound_SetAndroidTitleTouch(bool active) { (void)active; }
+#endif
+
 
 #define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED)
 
@@ -144,9 +167,11 @@ void EnMag_Init(Actor* thisx, PlayState* play) {
     this->unk_E318 = 0;
     this->unk_E31C = 0;
     this->unk_E320 = 0;
+    Veilbound_SetAndroidTitleTouch(true);
 }
 
 void EnMag_Destroy(Actor* thisx, PlayState* play) {
+    Veilbound_SetAndroidTitleTouch(false);
 }
 
 void EnMag_Update(Actor* thisx, PlayState* play) {
