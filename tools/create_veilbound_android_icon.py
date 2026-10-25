@@ -22,5 +22,11 @@ for suffix,side in [("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdp
     p=root/"res"/("mipmap-"+suffix)/"ic_launcher.png"
     p.parent.mkdir(parents=True,exist_ok=True)
     icon(side).save(p)
+    icon(side).save(p.with_name("ic_launcher_foreground.png"))
 icon(512).save(root/"veilbound_launcher_master_512.png")
 print("Generated VEILBOUND V launcher icons")
+
+# Override default adaptive-icon background to avoid Shipwright remnants.
+bg=root/"res"/"drawable"/"ic_launcher_background.xml"
+bg.parent.mkdir(parents=True,exist_ok=True)
+bg.write_text('<shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#091D1D"/></shape>')
