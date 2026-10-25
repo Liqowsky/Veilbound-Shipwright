@@ -1,1 +1,1 @@
-Build request: 2026-10-25. Audio API compatibility fix for Android (Audio_PlaySfxGeneral -> Audio_PlaySoundGeneral) verified against uploaded error log.
+Build request 2026-10-25: native emerald fog, 13 animated particle glints, logo fade-in, glow start button. Source commit 47566f792b37840b5904862238354d703f6214a6.
