@@ -41,7 +41,7 @@ jobs:
           echo 'Android audio API compatibility verified before C++ compile'
       - name: Validate VEILBOUND Android patch scripts
         run: |
-          python3 -m py_compile veilbound/tools/patch_veilbound_android_ui.py veilbound/tools/create_veilbound_android_icon.py veilbound/tools/patch_veilbound_immersive.py
+          python3 -m py_compile veilbound/tools/patch_veilbound_android_ui.py veilbound/tools/create_veilbound_android_icon.py veilbound/tools/patch_veilbound_immersive.py veilbound/tools/patch_veilbound_file_select.py
       - name: VEILBOUND branding and immersive fullscreen
         shell: bash
         run: |
@@ -88,6 +88,13 @@ jobs:
         run: |
           python3 veilbound/tools/patch_veilbound_immersive.py android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
           grep -q 'veilboundApplyImmersiveFullscreen' android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
+      - name: Install VEILBOUND modern touch save menu and native file selection
+        shell: bash
+        run: |
+          cp veilbound/soh/src/overlays/gamestates/ovl_file_choose/z_file_choose.c /tmp/veilbound-file-select-original.c 2>/dev/null || true
+          python3 veilbound/tools/patch_veilbound_file_select.py android-port
+          grep -q 'Veilbound_UpdateFileSelectTouch' android-port/soh/src/overlays/gamestates/ovl_file_choose/z_file_choose.c
+          grep -q 'setVeilboundFileSelectUiActive' android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
       - name: Generate VEILBOUND launcher icon
         shell: bash
         run: |
