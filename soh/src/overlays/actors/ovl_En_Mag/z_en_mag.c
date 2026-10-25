@@ -176,7 +176,11 @@ void EnMag_Update(Actor* thisx, PlayState* play) {
                 this->globalState = MAG_STATE_FADE_OUT;
             }
         } else if (this->globalState >= MAG_STATE_DISPLAY) {
-            if (sDelayTimer == 0) {
+            // Do not swallow the first press during the old 20-frame wait.
+            if (sDelayTimer == 0 ||
+                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
+                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
+                CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) {
                 if (CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
                     CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
                     CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) {
