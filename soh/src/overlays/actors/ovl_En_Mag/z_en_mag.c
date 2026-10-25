@@ -579,55 +579,26 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             EnMag_DrawImageRGBA32(&gfx, 160, 105, (u8*)LOGO_TEX, 160, 160);
         }
 
-        // Emerald glints: thin tapered primitives, no tiled texture artifacts.
+        // Glints anchored to the medallion and chain, not below the title.
         if (veilboundFrame > 28) {
             s32 i;
             gDPPipeSync(gfx++);
             gDPSetCycleType(gfx++, G_CYC_FILL);
             for (i = 0; i < 11; ++i) {
                 s32 phase = (veilboundFrame * (1 + i % 3) + i * 23) % 140;
-                s32 px = 115 + ((i * 43) % 92);
-                s32 py = 158 - phase / 3 + ((i * 11) % 16);
-                s32 intensity = phase < 20 ? 20 + phase * 5 : (phase > 110 ? 20 : 115);
-                // Tiny twinkles: never the original 8x8 green tile.
-                if (intensity > 70 && px > 0 && px < 318 && py > 0 && py < 238) {
-                    u32 packed = GPACK_RGBA5551(28, 235, 147, 1);
+                s32 px = 132 + ((i * 17) % 80);
+                s32 py = 78 + ((i * 19) % 55) - phase / 12;
+                if (phase > 30 && phase < 108 && px > 0 && px < 318 && py > 0 && py < 235) {
+                    u32 packed = GPACK_RGBA5551(49, 224, 160, 1);
                     gDPSetFillColor(gfx++, (packed << 16) | packed);
-                    gDPFillRectangle(gfx++, px, py, px + 1, py + 2);
+                    gDPFillRectangle(gfx++, px, py, px + 1, py + 1);
                 }
             }
             Gfx_SetupDL_39Ptr(&gfx);
         }
 
-        // VEILBOUND: gilded subtitle replaces Ocarina of Time (no legacy title overlays).
-        // Draw two gold passes for a restrained embossed/shadowed appearance.
-        if (veilboundFrame > 48) {
-            const char* subtitle = "ECHOES OF THE FIRST RIFT";
-            s32 subtitleAlpha = (veilboundFrame - 48) * 8;
-            if (subtitleAlpha > 240) subtitleAlpha = 240;
-            gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 75, 43, 13, subtitleAlpha / 2);
-            x = 82;
-            for (n = 0; subtitle[n] != 0; ++n) {
-                if (subtitle[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (subtitle[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x + 1, 156 + 1);
-                }
-                x += 6;
-            }
-            gDPPipeSync(gfx++);
-            gDPSetPrimColor(gfx++, 0, 0, 234, 197, 105, subtitleAlpha);
-            x = 82;
-            for (n = 0; subtitle[n] != 0; ++n) {
-                if (subtitle[n] != ' ') {
-                    EnMag_DrawCharTexture(&gfx, font->fontBuf +
-                        (subtitle[n] - 'A' + (sFontType == FONT_TYPE_PAL ? 0x0A : 0xAB)) * FONT_CHAR_TEX_SIZE,
-                        x, 156);
-                }
-                x += 6;
-            }
-        }
+        // Subtitle is already baked into the approved logo texture.
+        // Do not draw a second, oversized "ECHOES OF THE FIRST RIFT".
 
         // Separate gold start medallion and quiet studio signature.
         // Buttons still use the game's existing two-stage input logic.
