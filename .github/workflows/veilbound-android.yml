@@ -3,6 +3,10 @@ name: VEILBOUND Android APK (experimental)
 # Avoid burning 30+ minutes on each workflow edit.
 on:
   workflow_dispatch:
+  push:
+    branches: [veilbound/test-lab]
+    paths:
+      - '.github/veilbound-android-build-trigger'
 permissions:
   contents: read
 jobs:
