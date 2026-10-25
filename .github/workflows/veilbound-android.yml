@@ -83,6 +83,18 @@ jobs:
           ccache --set-config=max_size=1G
           ccache --zero-stats
           ccache --show-config | grep -E 'cache_dir|max_size' || true
+      - name: Generate native title HD-master textures
+        shell: bash
+        run: |
+          sudo apt-get install -y python3-pil fonts-dejavu-core
+          python3 veilbound/tools/veilbound_build_title_art.py --header android-port/soh/src/overlays/actors/ovl_En_Mag/veilbound_title_button.h --master-dir "$GITHUB_WORKSPACE/veilbound-4k-title-art"
+          test -s android-port/soh/src/overlays/actors/ovl_En_Mag/veilbound_title_button.h
+      - name: Upload 4K title art source and native preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: VEILBOUND-4K-title-master-assets
+          path: veilbound-4k-title-art/
+          if-no-files-found: error
       - name: Build VEILBOUND standalone debug APK
         working-directory: android-port/Android
         shell: bash
