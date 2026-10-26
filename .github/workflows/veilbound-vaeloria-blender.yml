@@ -1,0 +1,23 @@
+name: VEILBOUND — Blender Vaeloria Cove (true 3D)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cove-render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: sudo apt-get update && sudo apt-get install -y blender
+      - name: Create genuine editable Blender scene and render
+        env:
+          VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
+        run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
+      - name: Publish project and image
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAELORIA-BLENDER-COVE-AND-RENDER
+          path: vaeloria-output/
+          if-no-files-found: error
