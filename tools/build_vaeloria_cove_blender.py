@@ -80,11 +80,34 @@ def house(name,x,y,z,w=17,d=13,h=10):
  for dx in (-w*.35,w*.35):tube(name+' timber post',(x+dx,y-d/2-5,z),(x+dx,y-d/2-5,z+8),.28,wood)
 # Two facing headlands leave a very deep open bay: sea is the CENTER.
 cube('Ocean surface under open bay',(0,40,-2),(275,285,.4),water)
-# Modelled left and right terraced land: geometry follows photo silhouettes, not the old flat strip.
-cube('LEFT coastal home terrace',(-84,34,6),(68,135,13),sand)
-cube('LEFT near foreground terraces',(-93,-45,4),(90,60,9),sand)
-cube('RIGHT lighthouse high mesa',(83,62,21),(54,106,41),rock)
-cube('RIGHT cave beach',(70,-18,0),(76,42,3),sand)
+# Swept coast meshes replace the old four giant cuboids.
+# Center inlet remains open, with irregular terraces and stratified cliff bands.
+def coast_terrace(name,side,front,back,outer,inner,base_z,height,material):
+ sections=32
+ verts=[];faces=[]
+ for i in range(sections):
+  t=i/(sections-1)
+  y=front+(back-front)*t
+  shore=inner+side*(3*math.sin(t*9.3)+2*math.sin(t*16.1))
+  far=outer+side*(5*math.sin(t*5.6))
+  top=base_z+height*(.75+.17*math.sin(t*4.4)+.08*math.sin(t*13.1))
+  # shore lip, upper ground and outer mountain face
+  for x,z in ((shore,-1.1),(shore,top*.63),(far,top),(far,base_z-6)):
+   verts.append((x,y,z))
+  if i:
+   for j in range(3):
+    a=4*(i-1)+j;b=4*i+j
+    faces.extend(((a,b,b+1),(a,b+1,a+1)))
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+ o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o);o.data.materials.append(material)
+ solid=o.modifiers.new('Cliff solid underside','SOLIDIFY');solid.thickness=2.0
+ return o
+coast_terrace('LEFT layered coast',-1,-85,150,-130,-54,9,12,sand)
+coast_terrace('RIGHT tall lighthouse cliffs',1,-38,150,133,56,19,28,rock)
+# A separate landing shelf supports the protagonist home and village buildings.
+cube('Home terrace foundation',(-88,-5,10),(34,27,7),rocklight,.6)
+# Thin beach at the cave base: keep turquoise bay unobstructed.
+cube('Cave golden beach',(77,-23,-.35),(24,30,1.3),sand)
 for side in (-1,1):
  for i in range(95):
   x=random.uniform(-119,-59) if side==-1 else random.uniform(61,116)
@@ -92,6 +115,16 @@ for side in (-1,1):
   z=random.uniform(8,23) if side==-1 else random.uniform(15,38)
   sz=random.uniform(2,11)
   rockform(('LEFT' if side==-1 else 'RIGHT')+' cliff rock '+str(i),(x,y,z),(random.uniform(2,6),random.uniform(2,7),sz), rocklight if i%5==0 else rock)
+# Painterly sandstone strata at right cliff foot, actual mesh bands.
+for i in range(24):
+ y=-25+i*6.6
+ x=61+3*math.sin(i*.71)
+ rockform('Bay coast vertical strata %02d'%i,(x,y,8+5*math.sin(i*.43)),(3.5,5.2,11+3*math.sin(i)),rocklight if i%4==0 else rock)
+# Color-separated windswept rock shelves on the opposite cape
+for i in range(22):
+ y=-47+i*8
+ x=-57-4*math.cos(i*.43)
+ rockform('Home coast sandstone shelf %02d'%i,(x,y,6+math.cos(i*.6)),(4,5,2.5),rocklight)
 # Landmark house dominates left third.
 house('PROTAGONIST FAMILY HOME',-88,-5,13,28,20,14)
 for i,(x,y,w) in enumerate([(-65,33,14),(-74,65,13),(-47,58,11),(-57,83,12)]):
