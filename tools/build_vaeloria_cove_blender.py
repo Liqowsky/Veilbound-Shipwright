@@ -13,7 +13,9 @@ def mat(name,c,rough=1,emit=0):
  m=bpy.data.materials.new(name);m.diffuse_color=(*c,1);m.use_nodes=True
  p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*c,1);p.inputs['Roughness'].default_value=rough
  if emit:
-  p.inputs['Emission Color'].default_value=(*c,1);p.inputs['Emission Strength'].default_value=emit
+  if 'Emission Color' in p.inputs: p.inputs['Emission Color'].default_value=(*c,1)
+  elif 'Emission' in p.inputs: p.inputs['Emission'].default_value=(*c,1)
+  if 'Emission Strength' in p.inputs: p.inputs['Emission Strength'].default_value=emit
  return m
 sand=mat('Warm ochre sand',(.79,.38,.14)); rock=mat('Red layered sandstone',(.52,.19,.09)); rocklight=mat('Sunlit cliff edges',(.91,.43,.18))
 stucco=mat('Sunbleached handpainted plaster',(.91,.75,.52)); wood=mat('Dark timber',(.21,.105,.065)); roof=mat('Rust cloth awning',(.52,.115,.08))
@@ -148,7 +150,7 @@ for n,pos,power,color,size in [('Emerald cave point',(58,-7,11),1800,(.08,1,.54)
 world=bpy.data.worlds.new('Twilight warm sky') if not bpy.data.worlds else bpy.data.worlds[0];world.use_nodes=True
 world.node_tree.nodes['Background'].inputs['Color'].default_value=(.33,.48,.70,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 bpy.context.scene.world=world
-sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=48
+sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=16
 sc.render.resolution_x=1600;sc.render.resolution_y=900;sc.render.resolution_percentage=100
 sc.view_settings.view_transform='AgX'
 bpy.ops.wm.save_as_mainfile(filepath=str(out/'VAELORIA_COVE_REFERENCE.blend'))
