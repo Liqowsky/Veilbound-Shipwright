@@ -14,12 +14,18 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Install Blender
-        run: sudo apt-get update && sudo apt-get install -y blender
+      - name: Install Blender from official standalone archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 20 --max-time 240 https://download.blender.org/release/Blender4.2/blender-4.2.9-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          mkdir -p "$RUNNER_TEMP/blender-bin"
+          tar -xJf /tmp/blender.tar.xz -C "$RUNNER_TEMP/blender-bin" --strip-components=1
+          "$RUNNER_TEMP/blender-bin/blender" --background --factory-startup --python-expr 'import bpy; print(bpy.app.version_string)'
       - name: Build NEW Vaeloria scene from scratch
         env:
           VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-        run: blender --background --threads 4 --python tools/vaeloria_cove_v2.py
+        run: "$RUNNER_TEMP/blender-bin/blender" --background --threads 4 --python tools/vaeloria_cove_v2.py
       - name: Verify new .blend and actual Blender render
         run: |
           test -s vaeloria-output/VAELORIA_COVE_V2.blend
