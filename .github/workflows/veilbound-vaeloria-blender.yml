@@ -25,7 +25,9 @@ jobs:
       - name: Build NEW Vaeloria scene from scratch
         env:
           VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-        run: "$RUNNER_TEMP/blender-bin/blender" --background --threads 4 --python tools/vaeloria_cove_v2.py
+        shell: bash
+        run: |
+          "$RUNNER_TEMP/blender-bin/blender" --background --threads 4 --python tools/vaeloria_cove_v2.py
       - name: Verify new .blend and actual Blender render
         run: |
           test -s vaeloria-output/VAELORIA_COVE_V2.blend
