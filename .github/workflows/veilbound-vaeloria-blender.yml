@@ -1,6 +1,11 @@
 name: VEILBOUND — Blender Vaeloria Cove (true 3D)
 on:
   workflow_dispatch:
+  push:
+    branches: [veilbound/test-lab]
+    paths:
+      - '.github/workflows/veilbound-vaeloria-blender.yml'
+      - 'tools/build_vaeloria_cove_blender.py'
 permissions:
   contents: read
 jobs:
