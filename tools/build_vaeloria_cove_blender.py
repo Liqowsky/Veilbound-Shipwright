@@ -151,6 +151,13 @@ world=bpy.data.worlds.new('Twilight warm sky') if not bpy.data.worlds else bpy.d
 world.node_tree.nodes['Background'].inputs['Color'].default_value=(.33,.48,.70,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 bpy.context.scene.world=world
 sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=16
+# Ubuntu apt Blender builds can omit OpenImageDenoise entirely.
+# Disable both render and viewport denoisers before invoking Cycles.
+sc.cycles.use_denoising=False
+for layer in sc.view_layers:
+ if hasattr(layer,'cycles'):
+  layer.cycles.use_denoising=False
+
 sc.render.resolution_x=1600;sc.render.resolution_y=900;sc.render.resolution_percentage=100
 sc.view_settings.view_transform='AgX'
 bpy.ops.wm.save_as_mainfile(filepath=str(out/'VAELORIA_COVE_REFERENCE.blend'))
