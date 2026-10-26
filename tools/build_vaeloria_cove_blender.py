@@ -124,28 +124,30 @@ cube('Ocean surface under open bay',(0,40,-2),(275,285,.4),water)
 # Swept coast meshes replace the old four giant cuboids.
 # Center inlet remains open, with irregular terraces and stratified cliff bands.
 def coast_terrace(name,side,front,back,outer,inner,base_z,height,material):
- # Closed coastline with vertex-based terraces, NOT flat slab and exposed undersides.
- count=64;verts=[];faces=[]
- for i in range(count):
-  t=i/(count-1);y=front+(back-front)*t
-  shore=inner+side*(4*math.sin(t*7)+2*math.sin(t*17))
-  far=outer+side*(7*math.sin(t*5.2)+3*math.sin(t*13))
-  top=base_z+height*(.83+.13*math.sin(t*6)+.04*math.sin(t*21))
-  # Shore edge starts near sea level; peaks inland. High cliff face occurs
-  # where ground rises over the first 15 percent of terrain depth.
-  for j in range(9):
-   u=j/8
-   x=shore+(far-shore)*u
-   raise_curve=(u**.42) if side==1 else (u**.8)
-   z=-1.6+(top+1.6)*raise_curve+1.1*math.sin(i*.71+j*1.9)*u*(1-u)
-   verts.append((x,y,z))
+ # Organic terraced coastline, with sand stretching onto the waterline.
+ # 72 x 22 grid; the prior version was a vertical curtain with exposed undersides.
+ rows=72;cols=22;verts=[];faces=[]
+ for i in range(rows):
+  t=i/(rows-1);y=front+(back-front)*t
+  shore=inner+side*(2.5*math.sin(t*7)+1.8*math.sin(t*17))
+  far=outer+side*(5*math.sin(t*5.2)+2*math.sin(t*13))
+  peak=base_z+height*(.84+.11*math.sin(t*6)+.05*math.sin(t*21))
+  for j in range(cols):
+   u=j/(cols-1);x=shore+(far-shore)*u
+   # Near-water bank, ascending terraces, wide plateau for buildings.
+   a=max(0,min(1,u/.30))
+   rise=a*a*(3-2*a)
+   h=-1.8+(peak+1.8)*rise
+   h+=1.25*math.sin(i*.46+j*.76)*math.sin(math.pi*u)
+   verts.append((x,y,h))
   if i:
-   for j in range(8):
-    a=(i-1)*9+j;b=i*9+j
-    faces.append((a,b,a+1));faces.append((a+1,b,b+1))
+   for j in range(cols-1):
+    a=(i-1)*cols+j;b=i*cols+j
+    faces.extend(((a,b,a+1),(a+1,b,b+1)))
  mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
- o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o);o.data.materials.append(material)
- return o
+ ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob);ob.data.materials.append(material)
+ bevel=ob.modifiers.new('Natural soft terrain relief','SUBSURF');bevel.levels=1;bevel.render_levels=1
+ return ob
 coast_terrace('LEFT layered coast',-1,-85,150,-130,-54,9,12,sand)
 coast_terrace('RIGHT tall lighthouse cliffs',1,-38,150,133,56,19,28,rock)
 # A separate landing shelf supports the protagonist home and village buildings.
@@ -153,20 +155,20 @@ cube('Home terrace foundation',(-88,-5,10),(34,27,7),rocklight,.6)
 # Thin beach at the cave base: keep turquoise bay unobstructed.
 cube('Cave golden beach',(77,-23,-.35),(24,30,1.3),sand)
 for side in (-1,1):
- for i in range(44):
+ for i in range(16):
   x=random.uniform(-119,-59) if side==-1 else random.uniform(61,116)
   y=random.uniform(-24,118)
   z=random.uniform(8,23) if side==-1 else random.uniform(15,38)
   sz=random.uniform(1.6,5)
   rockform(('LEFT' if side==-1 else 'RIGHT')+' cliff rock '+str(i),(x,y,z),(random.uniform(3,9),random.uniform(3,9),sz), rocklight if i%5==0 else rock)
 # Painterly sandstone strata at right cliff foot, actual mesh bands.
-for i in range(24):
- y=-25+i*6.6
+for i in range(12):
+ y=-25+i*12
  x=61+3*math.sin(i*.71)
  rockform('Bay coast vertical strata %02d'%i,(x,y,8+5*math.sin(i*.43)),(3.5,5.2,11+3*math.sin(i)),rocklight if i%4==0 else rock)
 # Color-separated windswept rock shelves on the opposite cape
-for i in range(22):
- y=-47+i*8
+for i in range(12):
+ y=-47+i*13
  x=-57-4*math.cos(i*.43)
  rockform('Home coast sandstone shelf %02d'%i,(x,y,6+math.cos(i*.6)),(4,5,2.5),rocklight)
 # Main house must come from real Quaternius assets whenever available.
@@ -196,7 +198,7 @@ for i in range(17):
  x=random.uniform(63,69);y=random.uniform(-17,-1);z=random.uniform(3,15)
  cone('Luminous cave emerald '+str(i),(x,y,z),random.uniform(.35,1.4),random.uniform(1.5,5.6),green,5)
 # Open bay details, docks, shallow surf, sunlit stylized formations.
-for i in range(12):
+for i in range(7):
  x=random.uniform(-48,48);y=random.uniform(0,105)
  rockform('Sea stack '+str(i),(x,y,random.uniform(-1,4)),(random.uniform(1,4),random.uniform(1,6),random.uniform(1,4)),rock)
 for i in range(100):
@@ -231,7 +233,7 @@ if kitbash_script.exists():
 def point(obj,target):
  obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
 bpy.ops.object.camera_add(location=(3,-190,64))
-cam=bpy.context.object;cam.name='MENU — reference composition';point(cam,(0,35,21));cam.data.type='PERSP';cam.data.lens=39
+cam=bpy.context.object;cam.name='MENU — reference composition';point(cam,(0,35,21));cam.data.type='PERSP';cam.data.lens=42
 bpy.context.scene.camera=cam
 bpy.ops.object.light_add(type='SUN',location=(-50,110,100))
 sun=bpy.context.object;sun.name='Sundown orange';sun.data.energy=2.7;sun.data.color=(1,.58,.31);point(sun,(0,0,0))
