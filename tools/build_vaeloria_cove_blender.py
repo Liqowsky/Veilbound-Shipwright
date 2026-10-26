@@ -175,6 +175,10 @@ for i,(x,y,z) in enumerate([(-110,-10,20),(-49,34,21),(96,37,45)]):
 for i,(x,y,z) in enumerate([(-119,94,12),(116,101,43)]):
  tube('EXIT '+str(i)+' marker A',(x-3,y,z),(x-3,y,z+6),.28,wood)
  tube('EXIT '+str(i)+' marker B',(x+3,y,z),(x+3,y,z+6),.28,wood)
+# Load CC0 models from GitHub Actions asset download before saving the final .blend.
+kitbash_script=Path(__file__).parent/'vaeloria_kitbash.py'
+if kitbash_script.exists():
+ exec(compile(kitbash_script.read_text(),str(kitbash_script),'exec'))
 # CAMERA deliberately framed from seaside-facing foreground toward sunlit town and lighthouse
 def point(obj,target):
  obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
