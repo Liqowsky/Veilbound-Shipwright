@@ -20,6 +20,36 @@ stucco=mat('Sunbleached handpainted plaster',(.91,.75,.52)); wood=mat('Dark timb
 water=mat('Deep teal bay',(.017,.28,.37),.28);foam=mat('Shallow turquoise foam',(.64,.93,.79))
 green=mat('Emerald magical crystals',(.04,.96,.51),.2,3.2); beacon=mat('Warm beacon', (1,.7,.19),.2,5)
 grass=mat('Dried grasses',(.55,.39,.12));dark=mat('Deep window recess',(.08,.07,.055))
+# PROCEDURAL PAINTED TEXTURE PASS — these shaders render on actual mesh surfaces.
+# Object-space coordinates avoid needing UVs for preliminary terrain/architecture art.
+def painted_shader(material, dark_color, light_color, scale=4.0, bump=0.10):
+ nodes=material.node_tree.nodes; links=material.node_tree.links
+ bsdf=nodes.get('Principled BSDF')
+ coord=nodes.new('ShaderNodeTexCoord')
+ noise=nodes.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=scale
+ noise.inputs['Detail'].default_value=3.3;noise.inputs['Roughness'].default_value=.68
+ ramp=nodes.new('ShaderNodeValToRGB')
+ ramp.color_ramp.elements[0].position=.21
+ ramp.color_ramp.elements[0].color=(*dark_color,1)
+ ramp.color_ramp.elements[1].position=.79
+ ramp.color_ramp.elements[1].color=(*light_color,1)
+ links.new(coord.outputs['Generated'],noise.inputs['Vector'])
+ links.new(noise.outputs['Fac'],ramp.inputs['Fac'])
+ links.new(ramp.outputs['Color'],bsdf.inputs['Base Color'])
+ if bump:
+  b=nodes.new('ShaderNodeBump');b.inputs['Strength'].default_value=bump
+  b.inputs['Distance'].default_value=.08
+  links.new(noise.outputs['Fac'],b.inputs['Height'])
+  links.new(b.outputs['Normal'],bsdf.inputs['Normal'])
+painted_shader(sand,(.48,.205,.085),(.95,.62,.30),6,.12)
+painted_shader(rock,(.29,.09,.045),(.76,.30,.135),5,.21)
+painted_shader(rocklight,(.49,.19,.085),(1,.59,.27),5,.17)
+painted_shader(stucco,(.66,.46,.30),(1,.90,.68),15,.065)
+painted_shader(wood,(.12,.057,.03),(.47,.22,.10),11,.11)
+painted_shader(roof,(.30,.055,.045),(.78,.22,.11),12,.055)
+painted_shader(grass,(.28,.19,.055),(.83,.66,.27),8,.02)
+painted_shader(water,(.009,.11,.18),(.035,.59,.61),9,.045)
+# Lighting/render fidelity: lower render noise without using a pre-generated picture.
 def cube(name,at,scale,material,bevel=0):
  bpy.ops.mesh.primitive_cube_add(size=1,location=at);o=bpy.context.object;o.name=name;o.dimensions=scale;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
  o.data.materials.append(material)
@@ -118,7 +148,7 @@ for n,pos,power,color,size in [('Emerald cave point',(58,-7,11),1800,(.08,1,.54)
 world=bpy.data.worlds.new('Twilight warm sky') if not bpy.data.worlds else bpy.data.worlds[0];world.use_nodes=True
 world.node_tree.nodes['Background'].inputs['Color'].default_value=(.33,.48,.70,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 bpy.context.scene.world=world
-sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=24
+sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=48
 sc.render.resolution_x=1600;sc.render.resolution_y=900;sc.render.resolution_percentage=100
 sc.view_settings.view_transform='AgX'
 bpy.ops.wm.save_as_mainfile(filepath=str(out/'VAELORIA_COVE_REFERENCE.blend'))
