@@ -1,11 +1,12 @@
-name: VEILBOUND — Blender Vaeloria Cove (true 3D)
+name: VEILBOUND Blender Cove 3D
 on:
   workflow_dispatch:
   push:
-    branches: [veilbound/test-lab]
+    branches:
+      - veilbound/test-lab
     paths:
-      - '.github/workflows/veilbound-vaeloria-blender.yml'
-      - 'tools/build_vaeloria_cove_blender.py'
+      - .github/workflows/veilbound-vaeloria-blender.yml
+      - tools/build_vaeloria_cove_blender.py
 permissions:
   contents: read
 jobs:
@@ -16,76 +17,36 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Blender
         run: sudo apt-get update && sudo apt-get install -y blender
-      - name: Fetch free CC0 village and coastal models from OpenGameArt
+      - name: Download and validate CC0 models
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/veilbound-assets/village" "$GITHUB_WORKSPACE/veilbound-assets/coastal"
-          curl --fail --location --retry 3 --connect-timeout 25 --max-time 180 \
-            "https://opengameart.org/sites/default/files/medieval_village_pack_-_dec_2020.zip" \
-            -o "$RUNNER_TEMP/quaternius_village.zip"
-          curl --fail --location --retry 3 --connect-timeout 25 --max-time 180 \
-            "https://opengameart.org/sites/default/files/kenney_pirate-kit_2.1.zip" \
-            -o "$RUNNER_TEMP/kenney_coastal.zip"
-          unzip -t "$RUNNER_TEMP/quaternius_village.zip" >/dev/null
-          unzip -t "$RUNNER_TEMP/kenney_coastal.zip" >/dev/null
-          unzip -q "$RUNNER_TEMP/quaternius_village.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/village"
-          unzip -q "$RUNNER_TEMP/kenney_coastal.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/coastal"
-          echo "Model samples:"
-          find "$GITHUB_WORKSPACE/veilbound-assets" -type f | grep -Ei '[.](obj|gltf|glb)
-          count=$(find "$GITHUB_WORKSPACE/veilbound-assets" -type f | grep -Eic '[.](obj|gltf|glb)
-          test "$count" -gt 5
-          echo "Verified $count imported-source models"
-      - name: Create genuine editable Blender scene and render
+          curl -fL --retry 3 --connect-timeout 25 --max-time 180 "https://opengameart.org/sites/default/files/medieval_village_pack_-_dec_2020.zip" -o "$RUNNER_TEMP/village.zip"
+          curl -fL --retry 3 --connect-timeout 25 --max-time 180 "https://opengameart.org/sites/default/files/kenney_pirate-kit_2.1.zip" -o "$RUNNER_TEMP/coastal.zip"
+          unzip -t "$RUNNER_TEMP/village.zip" >/dev/null
+          unzip -t "$RUNNER_TEMP/coastal.zip" >/dev/null
+          unzip -q "$RUNNER_TEMP/village.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/village"
+          unzip -q "$RUNNER_TEMP/coastal.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/coastal"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          root=Path(os.environ["GITHUB_WORKSPACE"])/"veilbound-assets"
+          models=[p for p in root.rglob("*") if p.suffix.lower() in (".obj",".gltf",".glb")]
+          print("Found model files:",len(models))
+          for p in models[:25]: print(p.relative_to(root))
+          if len(models)<6: raise SystemExit("ERROR: insufficient CC0 model files")
+          PY
+      - name: Build Blender scene
         env:
           VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
           VAELORIA_CC0_ASSETS: ${{ github.workspace }}/veilbound-assets
         run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
-      - name: Publish project and image
-        uses: actions/upload-artifact@v4
-        with:
-          name: VAELORIA-BLENDER-COVE-AND-RENDER
-          path: vaeloria-output/
-          if-no-files-found: error
- | head -n 35 || true
-          count=$(find "$GITHUB_WORKSPACE/veilbound-assets" -type f \\( -iname '*.obj' -o -iname '*.gltf' -o -iname '*.glb' \\) | wc -l)
-          test "$count" -gt 5
-          echo "Verified $count imported-source models"
-      - name: Create genuine editable Blender scene and render
-        env:
-          VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-          VAELORIA_CC0_ASSETS: ${{ github.workspace }}/veilbound-assets
-        run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
-      - name: Publish project and image
-        uses: actions/upload-artifact@v4
-        with:
-          name: VAELORIA-BLENDER-COVE-AND-RENDER
-          path: vaeloria-output/
-          if-no-files-found: error
- || true)
-          test "$count" -gt 5
-          echo "Verified $count imported-source models"
-      - name: Create genuine editable Blender scene and render
-        env:
-          VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-          VAELORIA_CC0_ASSETS: ${{ github.workspace }}/veilbound-assets
-        run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
-      - name: Publish project and image
-        uses: actions/upload-artifact@v4
-        with:
-          name: VAELORIA-BLENDER-COVE-AND-RENDER
-          path: vaeloria-output/
-          if-no-files-found: error
- | head -n 35 || true
-          count=$(find "$GITHUB_WORKSPACE/veilbound-assets" -type f \\( -iname '*.obj' -o -iname '*.gltf' -o -iname '*.glb' \\) | wc -l)
-          test "$count" -gt 5
-          echo "Verified $count imported-source models"
-      - name: Create genuine editable Blender scene and render
-        env:
-          VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-          VAELORIA_CC0_ASSETS: ${{ github.workspace }}/veilbound-assets
-        run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
-      - name: Publish project and image
+      - name: Validate output
+        run: |
+          test -s vaeloria-output/VAELORIA_COVE_REFERENCE.blend
+          test -s vaeloria-output/VAELORIA_COVE_REFERENCE_RENDER.png
+      - name: Upload scene and render
         uses: actions/upload-artifact@v4
         with:
           name: VAELORIA-BLENDER-COVE-AND-RENDER
