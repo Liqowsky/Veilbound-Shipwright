@@ -16,21 +16,30 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Blender
         run: sudo apt-get update && sudo apt-get install -y blender
-      - name: Download CC0 Kenney Retro Medieval 3D asset pack
+      - name: Fetch free CC0 village and coastal models from OpenGameArt
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/veilbound-assets"
-          curl -fL --retry 3 --connect-timeout 20 \
-            "https://opengameart.org/sites/default/files/kenney_retro-medieval-kit.zip" \
-            -o "$RUNNER_TEMP/kenney_retro-medieval-kit.zip"
-          unzip -q "$RUNNER_TEMP/kenney_retro-medieval-kit.zip" -d "$GITHUB_WORKSPACE/veilbound-assets"
-          find "$GITHUB_WORKSPACE/veilbound-assets" -iname '*.glb' | head -n 8
-          test "$(find "$GITHUB_WORKSPACE/veilbound-assets" -iname '*.glb' | wc -l)" -gt 0
+          mkdir -p "$GITHUB_WORKSPACE/veilbound-assets/village" "$GITHUB_WORKSPACE/veilbound-assets/coastal"
+          curl --fail --location --retry 3 --connect-timeout 25 --max-time 180 \
+            "https://opengameart.org/sites/default/files/medieval_village_pack_-_dec_2020.zip" \
+            -o "$RUNNER_TEMP/quaternius_village.zip"
+          curl --fail --location --retry 3 --connect-timeout 25 --max-time 180 \
+            "https://opengameart.org/sites/default/files/kenney_pirate-kit_2.1.zip" \
+            -o "$RUNNER_TEMP/kenney_coastal.zip"
+          unzip -t "$RUNNER_TEMP/quaternius_village.zip" >/dev/null
+          unzip -t "$RUNNER_TEMP/kenney_coastal.zip" >/dev/null
+          unzip -q "$RUNNER_TEMP/quaternius_village.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/village"
+          unzip -q "$RUNNER_TEMP/kenney_coastal.zip" -d "$GITHUB_WORKSPACE/veilbound-assets/coastal"
+          echo "Model samples:"
+          find "$GITHUB_WORKSPACE/veilbound-assets" -type f | grep -Ei '\\.(obj|gltf|glb)$' | head -n 35 || true
+          count=$(find "$GITHUB_WORKSPACE/veilbound-assets" -type f \\( -iname '*.obj' -o -iname '*.gltf' -o -iname '*.glb' \\) | wc -l)
+          test "$count" -gt 5
+          echo "Verified $count imported-source models"
       - name: Create genuine editable Blender scene and render
         env:
           VAELORIA_OUT: ${{ github.workspace }}/vaeloria-output
-          VAELORIA_ASSETS: ${{ github.workspace }}/veilbound-assets
+          VAELORIA_CC0_ASSETS: ${{ github.workspace }}/veilbound-assets
         run: blender --background --threads 4 --python tools/build_vaeloria_cove_blender.py
       - name: Publish project and image
         uses: actions/upload-artifact@v4
