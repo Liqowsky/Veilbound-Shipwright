@@ -83,24 +83,27 @@ cube('Ocean surface under open bay',(0,40,-2),(275,285,.4),water)
 # Swept coast meshes replace the old four giant cuboids.
 # Center inlet remains open, with irregular terraces and stratified cliff bands.
 def coast_terrace(name,side,front,back,outer,inner,base_z,height,material):
- sections=32
- verts=[];faces=[]
- for i in range(sections):
-  t=i/(sections-1)
-  y=front+(back-front)*t
-  shore=inner+side*(3*math.sin(t*9.3)+2*math.sin(t*16.1))
-  far=outer+side*(5*math.sin(t*5.6))
-  top=base_z+height*(.75+.17*math.sin(t*4.4)+.08*math.sin(t*13.1))
-  # shore lip, upper ground and outer mountain face
-  for x,z in ((shore,-1.1),(shore,top*.63),(far,top),(far,base_z-6)):
+ # Closed coastline with vertex-based terraces, NOT flat slab and exposed undersides.
+ count=64;verts=[];faces=[]
+ for i in range(count):
+  t=i/(count-1);y=front+(back-front)*t
+  shore=inner+side*(4*math.sin(t*7)+2*math.sin(t*17))
+  far=outer+side*(7*math.sin(t*5.2)+3*math.sin(t*13))
+  top=base_z+height*(.83+.13*math.sin(t*6)+.04*math.sin(t*21))
+  # Shore edge starts near sea level; peaks inland. High cliff face occurs
+  # where ground rises over the first 15 percent of terrain depth.
+  for j in range(9):
+   u=j/8
+   x=shore+(far-shore)*u
+   raise_curve=(u**.42) if side==1 else (u**.8)
+   z=-1.6+(top+1.6)*raise_curve+1.1*math.sin(i*.71+j*1.9)*u*(1-u)
    verts.append((x,y,z))
   if i:
-   for j in range(3):
-    a=4*(i-1)+j;b=4*i+j
-    faces.extend(((a,b,b+1),(a,b+1,a+1)))
+   for j in range(8):
+    a=(i-1)*9+j;b=i*9+j
+    faces.append((a,b,a+1));faces.append((a+1,b,b+1))
  mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
  o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o);o.data.materials.append(material)
- solid=o.modifiers.new('Cliff solid underside','SOLIDIFY');solid.thickness=2.0
  return o
 coast_terrace('LEFT layered coast',-1,-85,150,-130,-54,9,12,sand)
 coast_terrace('RIGHT tall lighthouse cliffs',1,-38,150,133,56,19,28,rock)
@@ -109,12 +112,12 @@ cube('Home terrace foundation',(-88,-5,10),(34,27,7),rocklight,.6)
 # Thin beach at the cave base: keep turquoise bay unobstructed.
 cube('Cave golden beach',(77,-23,-.35),(24,30,1.3),sand)
 for side in (-1,1):
- for i in range(95):
+ for i in range(44):
   x=random.uniform(-119,-59) if side==-1 else random.uniform(61,116)
   y=random.uniform(-24,118)
   z=random.uniform(8,23) if side==-1 else random.uniform(15,38)
-  sz=random.uniform(2,11)
-  rockform(('LEFT' if side==-1 else 'RIGHT')+' cliff rock '+str(i),(x,y,z),(random.uniform(2,6),random.uniform(2,7),sz), rocklight if i%5==0 else rock)
+  sz=random.uniform(1.6,5)
+  rockform(('LEFT' if side==-1 else 'RIGHT')+' cliff rock '+str(i),(x,y,z),(random.uniform(3,9),random.uniform(3,9),sz), rocklight if i%5==0 else rock)
 # Painterly sandstone strata at right cliff foot, actual mesh bands.
 for i in range(24):
  y=-25+i*6.6
@@ -132,7 +135,11 @@ for i,(x,y,w) in enumerate([(-65,33,14),(-74,65,13),(-47,58,11),(-57,83,12)]):
 # Lighthouse stands high right, below silhouetted peak: no floating lighthouse.
 L=(83,57);base=43
 cone('TALL LIGHTHOUSE STONE TOWER',(L[0],L[1],base+20),7.6,40,stucco,14)
-cube('Lighthouse dark lantern',(L[0],L[1],base+43),(12,12,8),dark)
+cone('Lighthouse masonry ring',(L[0],L[1],base+39),8.5,3,rocklight,16)
+cone('Lighthouse dark lantern',(L[0],L[1],base+43),6.4,8,dark,12)
+for n in range(12):
+ a=n*math.tau/12
+ tube('Lantern railing '+str(n),(L[0]+7*math.cos(a),L[1]+7*math.sin(a),base+39),(L[0]+7*math.cos(a),L[1]+7*math.sin(a),base+45),.16,wood)
 cone('Lighthouse top roof',(L[0],L[1],base+48),8,5,roof,10)
 bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=2.4,location=(L[0],L[1],base+44))
 bpy.context.object.name='LIVE LIGHTHOUSE EMITTER';bpy.context.object.data.materials.append(beacon)
@@ -145,9 +152,9 @@ for i in range(17):
  x=random.uniform(63,69);y=random.uniform(-17,-1);z=random.uniform(3,15)
  cone('Luminous cave emerald '+str(i),(x,y,z),random.uniform(.35,1.4),random.uniform(1.5,5.6),green,5)
 # Open bay details, docks, shallow surf, sunlit stylized formations.
-for i in range(26):
+for i in range(12):
  x=random.uniform(-48,48);y=random.uniform(0,105)
- rockform('Sea stack '+str(i),(x,y,random.uniform(-1,4)),(random.uniform(1,4),random.uniform(1,6),random.uniform(2,10)),rock)
+ rockform('Sea stack '+str(i),(x,y,random.uniform(-1,4)),(random.uniform(1,4),random.uniform(1,6),random.uniform(1,4)),rock)
 for i in range(100):
  x=random.uniform(-56,62);y=random.uniform(-25,110)
  if abs(x)<15: continue
@@ -172,7 +179,7 @@ for i,(x,y,z) in enumerate([(-119,94,12),(116,101,43)]):
 def point(obj,target):
  obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
 bpy.ops.object.camera_add(location=(3,-190,64))
-cam=bpy.context.object;cam.name='MENU — reference composition';point(cam,(0,35,21));cam.data.type='PERSP';cam.data.lens=31
+cam=bpy.context.object;cam.name='MENU — reference composition';point(cam,(0,35,21));cam.data.type='PERSP';cam.data.lens=39
 bpy.context.scene.camera=cam
 bpy.ops.object.light_add(type='SUN',location=(-50,110,100))
 sun=bpy.context.object;sun.name='Sundown orange';sun.data.energy=2.7;sun.data.color=(1,.58,.31);point(sun,(0,0,0))
@@ -181,9 +188,9 @@ fill=bpy.context.object;fill.name='Cool sky fill';fill.data.energy=1100;fill.dat
 for n,pos,power,color,size in [('Emerald cave point',(58,-7,11),1800,(.08,1,.54),14),('Beacon local light',(83,57,87),2600,(1,.64,.2),14)]:
  bpy.ops.object.light_add(type='POINT',location=pos);o=bpy.context.object;o.name=n;o.data.energy=power;o.data.color=color;o.data.shadow_soft_size=size
 world=bpy.data.worlds.new('Twilight warm sky') if not bpy.data.worlds else bpy.data.worlds[0];world.use_nodes=True
-world.node_tree.nodes['Background'].inputs['Color'].default_value=(.33,.48,.70,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+world.node_tree.nodes['Background'].inputs['Color'].default_value=(.74,.35,.21,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 bpy.context.scene.world=world
-sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=16
+sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=32
 # Ubuntu apt Blender builds can omit OpenImageDenoise entirely.
 # Disable both render and viewport denoisers before invoking Cycles.
 sc.cycles.use_denoising=False
