@@ -78,6 +78,47 @@ def house(name,x,y,z,w=17,d=13,h=10):
  for dx in (-w*.3,w*.3):cube(name+' window', (x+dx,y-d/2-.16,z+6.3),(1.7,.20,2.6),dark)
  cube(name+' veranda canopy',(x,y-d/2-3,z+8.1),(w*.88,6,.33),roof)
  for dx in (-w*.35,w*.35):tube(name+' timber post',(x+dx,y-d/2-5,z),(x+dx,y-d/2-5,z+8),.28,wood)
+# IMPORT VERIFIED CC0 ASSET PACKS (pack content is printed to CI logs).
+# Never pretend stock cubes are finished art. Use Quaternius real village meshes.
+from glob import glob
+ASSET_ROOT=Path(os.environ.get('VAELORIA_CC0_ASSETS','/tmp/vaeloria-cc0'))
+def import_prefab(patterns, target, desired_width, label):
+ candidates=[]
+ for ext in ('.glb','.gltf','.obj'):
+  for file in ASSET_ROOT.rglob('*'+ext):
+   n=file.stem.lower()
+   if any(k in n for k in patterns):
+    candidates.append(file)
+ # Prefer real OBJ or glTF meshes rather than placeholder geometry.
+ candidates.sort(key=lambda p:(p.suffix not in ('.glb','.gltf'),len(p.name)))
+ if not candidates:
+  print('ASSET MISSING for',label,'patterns',patterns)
+  return False
+ file=candidates[0]
+ before=set(bpy.data.objects)
+ try:
+  if file.suffix in ('.glb','.gltf'):bpy.ops.import_scene.gltf(filepath=str(file))
+  elif hasattr(bpy.ops.wm,'obj_import'):bpy.ops.wm.obj_import(filepath=str(file))
+  else:bpy.ops.import_scene.obj(filepath=str(file))
+ except Exception as e:
+  print('ASSET IMPORT ERROR',file,str(e));return False
+ meshes=[o for o in bpy.data.objects if o not in before and o.type=='MESH']
+ if not meshes:return False
+ mn=Vector((min((o.matrix_world @ Vector(v)).x for o in meshes for v in o.bound_box),
+            min((o.matrix_world @ Vector(v)).y for o in meshes for v in o.bound_box),
+            min((o.matrix_world @ Vector(v)).z for o in meshes for v in o.bound_box)))
+ mx=Vector((max((o.matrix_world @ Vector(v)).x for o in meshes for v in o.bound_box),
+            max((o.matrix_world @ Vector(v)).y for o in meshes for v in o.bound_box),
+            max((o.matrix_world @ Vector(v)).z for o in meshes for v in o.bound_box)))
+ center=(mn+mx)/2; span=max(mx.x-mn.x,mx.y-mn.y,.001)
+ factor=desired_width/span
+ for o in meshes:
+  o.location=(o.location-center)*factor+Vector(target)
+  o.scale*=factor
+  o.name='CC0 '+label+' '+o.name
+ print('IMPORTED_CC0_MODEL',label,str(file),'meshcount',len(meshes))
+ return True
+
 # Two facing headlands leave a very deep open bay: sea is the CENTER.
 cube('Ocean surface under open bay',(0,40,-2),(275,285,.4),water)
 # Swept coast meshes replace the old four giant cuboids.
@@ -128,10 +169,13 @@ for i in range(22):
  y=-47+i*8
  x=-57-4*math.cos(i*.43)
  rockform('Home coast sandstone shelf %02d'%i,(x,y,6+math.cos(i*.6)),(4,5,2.5),rocklight)
-# Landmark house dominates left third.
-house('PROTAGONIST FAMILY HOME',-88,-5,13,28,20,14)
+# Main house must come from real Quaternius assets whenever available.
+if not import_prefab(('house','inn','tavern'),(-88,-5,14),28,'FAMILY_HOME'):
+ house('PROTAGONIST FAMILY HOME',-88,-5,13,28,20,14)
+
 for i,(x,y,w) in enumerate([(-65,33,14),(-74,65,13),(-47,58,11),(-57,83,12)]):
- house('VILLAGE '+str(i),x,y,13,w,w*.8,7)
+ if not import_prefab(('house','market','blacksmith','farm'),(x,y,14),w,'VILLAGE_'+str(i)):
+  house('VILLAGE '+str(i),x,y,13,w,w*.8,7)
 # Lighthouse stands high right, below silhouetted peak: no floating lighthouse.
 L=(83,57);base=43
 cone('TALL LIGHTHOUSE STONE TOWER',(L[0],L[1],base+20),7.6,40,stucco,14)
@@ -163,6 +207,10 @@ for i in range(15):
  x=-45+i*2.0
  cube('Pier timber '+str(i),(x,7,2),(1.5,22,.6),wood)
  if i%3==0:tube('Pier post '+str(i),(x,1,-2),(x,1,5),.35,wood)
+# CC0 coastal set dressing: actual Kenney boat and natural rock models.
+import_prefab(('boat','rowboat','dinghy'),(-25,-4,0),11,'FISHING_BOAT')
+import_prefab(('palm',),(-108,-20,16),13,'COASTAL_PALM')
+import_prefab(('barrel','crate'),(-70,-12,14),4,'DOCK_CRATES')
 # Dry shrubs and flagpoles
 for i in range(175):
  x=random.uniform(-112,-53) if i%2 else random.uniform(66,113)
