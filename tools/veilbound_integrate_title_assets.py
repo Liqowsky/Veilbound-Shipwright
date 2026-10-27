@@ -18,10 +18,12 @@ with ZipFile(archive) as z:
             raise SystemExit("Missing Veilbound asset in ZIP: " + name)
     music_out.parent.mkdir(parents=True, exist_ok=True)
     music_out.write_bytes(z.read(music_name))
+    sky_out = music_out.parent / "veilbound_rift_640x360.png"
+    sky_out.write_bytes(z.read("veilbound_title/veilbound_rift_640x360.png"))
     if music_out.stat().st_size < 100000:
         raise SystemExit("Emerald Whispers audio asset unexpectedly small")
     import io
-    pic = Image.open(io.BytesIO(z.read(image_name))).convert("RGBA")
+    pic = Image.open(io.BytesIO(z.read("veilbound_title/veilbound_rift_640x360.png"))).convert("RGBA")
     pic = pic.resize((320,180),Image.Resampling.LANCZOS if hasattr(Image,"Resampling") else Image.LANCZOS)
     lines = ["/* Auto-generated from approved Veilbound rift PNG. */",
              "#ifndef VEILBOUND_RIFT_GENERATED_H",
