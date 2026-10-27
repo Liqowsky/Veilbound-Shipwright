@@ -82,8 +82,11 @@ FontType sFontType;
 // #endregion
 
 static s16 sDelayTimer = 0;
+// 28 frames: two short acknowledgement blinks before scene transition.
+static s16 sVeilboundStartFlashFrames = 0;
 
 void EnMag_Init(Actor* thisx, PlayState* play) {
+    sVeilboundStartFlashFrames = 0;
     EnMag* this = (EnMag*)thisx;
     bool isMQ = ResourceMgr_IsGameMasterQuest();
 
@@ -179,19 +182,23 @@ void EnMag_Update(Actor* thisx, PlayState* play) {
     EnMag* this = (EnMag*)thisx;
     bool isMQ = ResourceMgr_IsGameMasterQuest();
 
-    // VEILBOUND: one button edge -> file select, regardless of title reveal.
-    // Use one unambiguous transition path; no 20-frame second-press cooldown.
-    if (gSaveContext.fileNum != 0xFEDC &&
+    // VEILBOUND: acknowledge START with two visible flashes before leaving the title.
+    // Keep music/title alive during the short acknowledgement; change scene only once.
+    if (sVeilboundStartFlashFrames == 0 &&
+        gSaveContext.fileNum != 0xFEDC &&
         (CHECK_BTN_ALL(play->state.input[0].press.button, BTN_START) ||
          CHECK_BTN_ALL(play->state.input[0].press.button, BTN_A) ||
          CHECK_BTN_ALL(play->state.input[0].press.button, BTN_B)) &&
         play->transitionTrigger != TRANS_TRIGGER_START &&
         this->globalState != MAG_STATE_FADE_OUT &&
         this->globalState != MAG_STATE_POST_DISPLAY) {
-        Audio_SetCutsceneFlag(0);
+        sVeilboundStartFlashFrames = 28;
         Audio_PlaySfxGeneral(NA_SE_SY_PIECE_OF_HEART, &gSfxDefaultPos, 4,
                              &gSfxDefaultFreqAndVolScale, &gSfxDefaultFreqAndVolScale,
                              &gSfxDefaultReverb);
+    }
+    if (sVeilboundStartFlashFrames > 0 && --sVeilboundStartFlashFrames == 0) {
+        Audio_SetCutsceneFlag(0);
         gSaveContext.gameMode = GAMEMODE_FILE_SELECT;
         play->transitionTrigger = TRANS_TRIGGER_START;
         play->transitionType = TRANS_TYPE_FADE_BLACK;
@@ -657,7 +664,7 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
 
         // True antialiased button artwork rasterized from a 3840x2160 master
         // at build time, not a text drawn with OoT's 16px glyphs.
-        if (veilboundFrame > 85) {
+        if (veilboundFrame > 85 && (sVeilboundStartFlashFrames == 0 || ((sVeilboundStartFlashFrames / 7) % 2) == 0)) {
             s32 appear = (veilboundFrame - 85) * 8;
             if (appear > 255) appear = 255;
             Gfx_SetupDL_39Ptr(&gfx);
