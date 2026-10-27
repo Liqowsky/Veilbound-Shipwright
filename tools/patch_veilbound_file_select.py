@@ -92,6 +92,7 @@ j=j.replace(needle,needle+'''
     private int veilboundRequestedFileSlot = -1;
     private LinearLayout veilboundFileSelectPanel;
     private LinearLayout veilboundNavPanel;
+    private ImageView veilboundSaveBackground;
 
     public synchronized int consumeVeilboundFileSelection() {
         int requested = veilboundRequestedFileSlot;
@@ -122,6 +123,20 @@ j=j.replace(needle,needle+'''
     private void veilboundBuildFileSelectPanel() {
         if (veilboundFileSelectPanel != null) return;
         FrameLayout container = (FrameLayout)findViewById(android.R.id.content);
+        // Full-screen approved Veilbound sky removes the old blue OoT file background.
+        ImageView sky = new ImageView(this);
+        try {
+            android.graphics.Bitmap backgroundArt = android.graphics.BitmapFactory.decodeStream(
+                getAssets().open("veilbound/veilbound_rift_640x360.png"));
+            sky.setImageBitmap(backgroundArt);
+            sky.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        } catch (java.io.IOException e) {
+            sky.setBackgroundColor(0xFF071F21);
+        }
+        container.addView(sky,new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
+        sky.setVisibility(View.GONE);
+        veilboundSaveBackground=sky;
         LinearLayout menu = new LinearLayout(this);
         menu.setOrientation(LinearLayout.VERTICAL);
         menu.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -216,10 +231,12 @@ if needle not in j: raise SystemExit("Missing Android touch visibility anchor")
 j=j.replace(needle,'''        if (veilboundFileSelectActive) {
             veilboundBuildFileSelectPanel();
             overlayView.setVisibility(View.GONE);
+            if (veilboundSaveBackground != null) veilboundSaveBackground.setVisibility(veilboundFileSelectSubmenu ? View.GONE : View.VISIBLE);
             veilboundFileSelectPanel.setVisibility(veilboundFileSelectSubmenu ? View.GONE : View.VISIBLE);
             if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(veilboundFileSelectSubmenu ? View.VISIBLE : View.GONE);
             return;
         }
+        if (veilboundSaveBackground != null) veilboundSaveBackground.setVisibility(View.GONE);
         if (veilboundFileSelectPanel != null) veilboundFileSelectPanel.setVisibility(View.GONE);
         if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(View.GONE);
         boolean touchControlsDisabled = preferences.getBoolean(PREF_TOUCH_CONTROLS_DISABLED, false);''',1)
