@@ -88,13 +88,6 @@ jobs:
         run: |
           python3 veilbound/tools/patch_veilbound_immersive.py android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
           grep -q 'veilboundApplyImmersiveFullscreen' android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
-      - name: Install VEILBOUND modern touch save menu and native file selection
-        shell: bash
-        run: |
-          cp veilbound/soh/src/overlays/gamestates/ovl_file_choose/z_file_choose.c /tmp/veilbound-file-select-original.c 2>/dev/null || true
-          python3 veilbound/tools/patch_veilbound_file_select.py android-port
-          grep -q 'Veilbound_UpdateFileSelectTouch' android-port/soh/src/overlays/gamestates/ovl_file_choose/z_file_choose.c
-          grep -q 'setVeilboundFileSelectUiActive' android-port/Android/app/src/main/java/com/dishii/soh/MainActivity.java
       - name: Generate VEILBOUND launcher icon
         shell: bash
         run: |
@@ -157,14 +150,6 @@ jobs:
           ccache --set-config=max_size=1G
           ccache --zero-stats
           ccache --show-config | grep -E 'cache_dir|max_size' || true
-      - name: Unpack approved Veilbound sky and Emerald Whispers loop into Android port
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s veilbound/VEILBOUND_Title_Android_Assets.zip
-          python3 veilbound/tools/veilbound_integrate_title_assets.py android-port veilbound/VEILBOUND_Title_Android_Assets.zip
-          test -s android-port/soh/src/overlays/actors/ovl_En_Mag/veilbound_rift_generated.h
-          test -s android-port/Android/app/src/main/assets/veilbound/emerald_whispers_loop.ogg
       - name: Generate native title HD-master textures
         shell: bash
         run: |
