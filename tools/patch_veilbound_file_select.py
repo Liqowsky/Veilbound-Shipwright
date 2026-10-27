@@ -57,7 +57,8 @@ static void Veilbound_SetFileSelectTouchUi(int enabled) {
 }
 static void Veilbound_UpdateFileSelectTouch(FileChooseContext* this, Input* input) {
     int isMainMenu = (this->menuMode == FS_MENU_MODE_CONFIG && this->configMode == CM_MAIN_MENU);
-    Veilbound_SetFileSelectTouchUi(1); // touch-only controls remain available in every file-select submenu
+    Veilbound_SetFileSelectTouchUi(1); // touch-only throughout file select
+    Veilbound_CallFileSelectJava("setVeilboundFileSelectSubmenu", "(Z)V", !isMainMenu);
     if (isMainMenu) {
         int selection = Veilbound_CallFileSelectJava("consumeVeilboundFileSelection", "()I", 0);
         if (selection >= FS_BTN_MAIN_FILE_1 && selection <= FS_BTN_MAIN_OPTIONS) {
@@ -87,6 +88,7 @@ needle='    private volatile boolean veilboundTitleActive = false;'
 if needle not in j:raise SystemExit("Run the existing VEILBOUND Android touch patch before this one")
 j=j.replace(needle,needle+'''
     private volatile boolean veilboundFileSelectActive = false;
+    private volatile boolean veilboundFileSelectSubmenu = false;
     private int veilboundRequestedFileSlot = -1;
     private LinearLayout veilboundFileSelectPanel;
     private LinearLayout veilboundNavPanel;
@@ -105,6 +107,15 @@ j=j.replace(needle,needle+'''
         runOnUiThread(() -> {
             veilboundFileSelectActive = active;
             applyTouchControlsVisibility();
+        });
+    }
+
+    public void setVeilboundFileSelectSubmenu(boolean submenu) {
+        runOnUiThread(() -> {
+            if (veilboundFileSelectSubmenu != submenu) {
+                veilboundFileSelectSubmenu = submenu;
+                applyTouchControlsVisibility();
+            }
         });
     }
 
@@ -205,8 +216,8 @@ if needle not in j: raise SystemExit("Missing Android touch visibility anchor")
 j=j.replace(needle,'''        if (veilboundFileSelectActive) {
             veilboundBuildFileSelectPanel();
             overlayView.setVisibility(View.GONE);
-            veilboundFileSelectPanel.setVisibility(View.VISIBLE);
-            if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(View.VISIBLE);
+            veilboundFileSelectPanel.setVisibility(veilboundFileSelectSubmenu ? View.GONE : View.VISIBLE);
+            if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(veilboundFileSelectSubmenu ? View.VISIBLE : View.GONE);
             return;
         }
         if (veilboundFileSelectPanel != null) veilboundFileSelectPanel.setVisibility(View.GONE);
