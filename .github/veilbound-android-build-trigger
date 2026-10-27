@@ -11,3 +11,5 @@
 2026-10-27: Native file-select palette (emerald/gold), suppress original A/B legend, preserving touch bridge and looped title OGG.
 
 2026-10-27: Emergency rollback to stable native title actor logo + PRESS START; disable experimental rift, file-select Android overlay and title MusicPlayer additions. Retain external HD .o2r logo override compatibility. Android APK smoke build.
+
+2026-10-27: Smoke build restored title with original PRESS START asset sharpened and output at 288x72; preserve exact previous logo O2R slot.
