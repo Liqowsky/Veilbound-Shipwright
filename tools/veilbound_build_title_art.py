@@ -98,7 +98,7 @@ def write_header(path, btn, haze):
             lines.append("    "+", ".join(str(v) for v in data[i:i+24])+",")
         return f"static u8 {name}[] __attribute__((aligned(8))) = {{\n"+"\n".join(lines)+"\n};\n"
     header="#ifndef VEILBOUND_TITLE_BUTTON_H\n#define VEILBOUND_TITLE_BUTTON_H\n"
-    header+="#define VEILBOUND_BUTTON_WIDTH 144\n#define VEILBOUND_BUTTON_HEIGHT 36\n"
+    header+="#define VEILBOUND_BUTTON_WIDTH 288\n#define VEILBOUND_BUTTON_HEIGHT 72\n"
     header+=arr("sVeilboundStartButtonTex",btn)
     header+=arr("sVeilboundMistTex",haze)
     header+=arr("sVeilboundSparkTex", spark())
@@ -123,5 +123,7 @@ if __name__=="__main__":
     mist_img=mist()
     mist_img.resize((512,512),resample).save(dest/"VEILBOUND_emerald_mist_512.png")
     b.save(dest/"VEILBOUND_button_native_preview.png")
-    write_header(Path(opts.header),b,mist_img)
-    print("Generated source 3840x2160, native RGBA32 button 144x36, and alpha-smoke 32x32:",opts.header)
+    button_hd = b.resize((288,72),resample).filter(ImageFilter.UnsharpMask(radius=1.0, percent=120, threshold=2))
+    button_hd.save(dest/"VEILBOUND_press_start_runtime_288x72.png")
+    write_header(Path(opts.header),button_hd,mist_img)
+    print("Generated source 3840x2160, native RGBA32 button 288x72, and alpha-smoke 32x32:",opts.header)
