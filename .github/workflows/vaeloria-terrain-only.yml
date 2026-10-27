@@ -1,0 +1,40 @@
+name: Vaeloria terrain ONLY - Blender render
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - blender/vaeloria_terrain_only.py
+      - .github/workflows/vaeloria-terrain-only.yml
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download official Blender portable
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output /tmp/blender.tar.xz https://download.blender.org/release/Blender4.2/blender-4.2.9-linux-x64.tar.xz
+          mkdir -p /tmp/blender
+          tar -xf /tmp/blender.tar.xz -C /tmp/blender --strip-components=1
+          /tmp/blender/blender --version
+      - name: Render landforms only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          /tmp/blender/blender -b -t 2 --python blender/vaeloria_terrain_only.py
+          test -s /tmp/vaeloria_terrain_only.png
+          test -s /tmp/vaeloria_terrain_only.blend
+          cp /tmp/vaeloria_terrain_only.png output/vaeloria_terrain_only.png
+          cp /tmp/vaeloria_terrain_only.blend output/vaeloria_terrain_only.blend
+      - name: Upload terrain preview and editable project
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAELORIA-TERRAIN-ONLY
+          path: output/
+          if-no-files-found: error
