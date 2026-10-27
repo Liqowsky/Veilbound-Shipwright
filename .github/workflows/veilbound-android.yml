@@ -157,6 +157,14 @@ jobs:
           ccache --set-config=max_size=1G
           ccache --zero-stats
           ccache --show-config | grep -E 'cache_dir|max_size' || true
+      - name: Unpack approved Veilbound sky and Emerald Whispers loop into Android port
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s veilbound/VEILBOUND_Title_Android_Assets.zip
+          python3 veilbound/tools/veilbound_integrate_title_assets.py android-port veilbound/VEILBOUND_Title_Android_Assets.zip
+          test -s android-port/soh/src/overlays/actors/ovl_En_Mag/veilbound_rift_generated.h
+          test -s android-port/Android/app/src/main/assets/veilbound/emerald_whispers_loop.ogg
       - name: Generate native title HD-master textures
         shell: bash
         run: |
