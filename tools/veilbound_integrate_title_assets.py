@@ -24,21 +24,21 @@ with ZipFile(archive) as z:
         raise SystemExit("Emerald Whispers audio asset unexpectedly small")
     import io
     pic = Image.open(io.BytesIO(z.read("veilbound_title/veilbound_rift_640x360.png"))).convert("RGBA")
-    pic = pic.resize((320,180),Image.Resampling.LANCZOS if hasattr(Image,"Resampling") else Image.LANCZOS)
+    pic = pic.resize((640,360),Image.Resampling.LANCZOS if hasattr(Image,"Resampling") else Image.LANCZOS)
     lines = ["/* Auto-generated from approved Veilbound rift PNG. */",
              "#ifndef VEILBOUND_RIFT_GENERATED_H",
              "#define VEILBOUND_RIFT_GENERATED_H"]
-    for row in range(6):
-        for col in range(5):
+    for row in range(12):
+        for col in range(10):
             data=pic.crop((col*64,row*30,(col+1)*64,(row+1)*30)).tobytes()
             name=f"sVeilboundRiftTile_{row}_{col}"
             lines.append(f"static const unsigned char {name}[{len(data)}] = {{")
             for i in range(0,len(data),32):
                 lines.append(",".join(str(v) for v in data[i:i+32])+",")
             lines.append("};")
-    lines.append("static const unsigned char* const sVeilboundRiftTiles[30] = {")
-    for row in range(6):
-        lines.append(",".join(f"sVeilboundRiftTile_{row}_{col}" for col in range(5))+",")
+    lines.append("static const unsigned char* const sVeilboundRiftTiles[120] = {")
+    for row in range(12):
+        lines.append(",".join(f"sVeilboundRiftTile_{row}_{col}" for col in range(10))+",")
     lines += ["};","#endif"]
     out.write_text("\n".join(lines)+"\n")
-print("Integrated Veilbound title:",music_out.stat().st_size,"OGG bytes; 30 tiled RGBA32 textures.")
+print("Integrated Veilbound title:",music_out.stat().st_size,"OGG bytes; 120 tiled RGBA32 textures.")
