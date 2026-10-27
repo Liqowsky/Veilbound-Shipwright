@@ -1,0 +1,40 @@
+name: Vaeloria V3 Circular Cove - Terrain Only
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - blender/vaeloria_circular_cove_v3.py
+      - .github/workflows/vaeloria-circular-cove-v3.yml
+permissions:
+  contents: read
+jobs:
+  model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Blender portable
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 15 --max-time 240 https://download.blender.org/release/Blender4.2/blender-4.2.9-linux-x64.tar.xz -o /tmp/b.tar.xz
+          mkdir -p /tmp/blender
+          tar -xJf /tmp/b.tar.xz -C /tmp/blender --strip-components=1
+          /tmp/blender/blender --version
+      - name: Generate model and real Blender preview
+        shell: bash
+        env:
+          VAELORIA_OUT: ${{ github.workspace }}/terrain-v3
+        run: |
+          set -euo pipefail
+          mkdir -p terrain-v3
+          /tmp/blender/blender -b -t 3 --python blender/vaeloria_circular_cove_v3.py
+          test -s terrain-v3/TERRAIN_ONLY_CIRCULAR_COVE_V3.blend
+          test -s terrain-v3/TERRAIN_ONLY_CIRCULAR_COVE_V3.png
+      - name: Upload actual terrain artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAELORIA-V3-CIRCULAR-COVE-TERRAIN
+          path: terrain-v3/
+          if-no-files-found: error
