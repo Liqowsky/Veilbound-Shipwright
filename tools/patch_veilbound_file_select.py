@@ -178,8 +178,8 @@ j=j.replace(needle,needle+'''
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         String[] captions = {"UP", "DOWN", "LEFT", "RIGHT", "OK", "BACK"};
-        int[] keyCodes = {ControllerButtons.BUTTON_DUP, ControllerButtons.BUTTON_DDOWN,
-            ControllerButtons.BUTTON_DLEFT, ControllerButtons.BUTTON_DRIGHT,
+        int[] keyCodes = {ControllerButtons.BUTTON_DPAD_UP, ControllerButtons.BUTTON_DPAD_DOWN,
+            ControllerButtons.BUTTON_DPAD_LEFT, ControllerButtons.BUTTON_DPAD_RIGHT,
             ControllerButtons.BUTTON_A, ControllerButtons.BUTTON_B};
         for (int k=0;k<captions.length;k++) {
             final int key=keyCodes[k];
