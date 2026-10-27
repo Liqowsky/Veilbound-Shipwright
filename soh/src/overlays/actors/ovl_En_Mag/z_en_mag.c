@@ -570,10 +570,10 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
             gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
                               0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
             gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, 255);
-            for (row = 0; row < 6; ++row) {
-                for (col = 0; col < 5; ++col) {
-                    Veilbound_DrawRGBA32Scaled(&gfx, 32 + col * 64, 20 + row * 40,
-                        sVeilboundRiftTiles[row * 5 + col], 64, 30, 64, 40);
+            for (row = 0; row < 12; ++row) {
+                for (col = 0; col < 10; ++col) {
+                    Veilbound_DrawRGBA32Scaled(&gfx, 16 + col * 32, 10 + row * 20,
+                        sVeilboundRiftTiles[row * 10 + col], 64, 30, 32, 20);
                 }
             }
         }
