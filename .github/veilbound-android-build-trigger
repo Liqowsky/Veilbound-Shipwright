@@ -9,3 +9,5 @@
 2026-10-27: Verify 640x360 native rift tiles generated directly from HD source; prepare proper O2R-based UI resource replacements (not Android view-only skin).
 
 2026-10-27: Native file-select palette (emerald/gold), suppress original A/B legend, preserving touch bridge and looped title OGG.
+
+2026-10-27: Emergency rollback to stable native title actor logo + PRESS START; disable experimental rift, file-select Android overlay and title MusicPlayer additions. Retain external HD .o2r logo override compatibility. Android APK smoke build.
