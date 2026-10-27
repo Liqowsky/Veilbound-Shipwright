@@ -1,0 +1,43 @@
+name: Veilbound Marble Reference Terrain V4
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - 'blender/vaeloria_marble_terrain_v4.py'
+      - '.github/workflows/vaeloria-marble-v4.yml'
+permissions:
+  contents: read
+jobs:
+  render-terrain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install required EGL support
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1 libx11-6 libxext6 libxrender1 libxi6 libxkbcommon0
+      - name: Download standalone Blender 4.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --connect-timeout 15 --max-time 240 https://download.blender.org/release/Blender4.2/blender-4.2.9-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          mkdir -p /tmp/blender
+          tar -xJf /tmp/blender.tar.xz -C /tmp/blender --strip-components=1
+      - name: Build true cliff and cave terrain
+        shell: bash
+        env:
+          VAELORIA_OUT: ${{ github.workspace }}/vaeloria-v4
+        run: |
+          set -euo pipefail
+          mkdir -p vaeloria-v4
+          /tmp/blender/blender -b -t 3 --python blender/vaeloria_marble_terrain_v4.py
+          test -s vaeloria-v4/VAELORIA_MARBLE_TERRAIN_V4.blend
+          test -s vaeloria-v4/VAELORIA_MARBLE_TERRAIN_V4.png
+      - name: Upload Blender terrain and screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAELORIA-MARBLE-CLIFF-TERRAIN-V4
+          path: vaeloria-v4/
+          if-no-files-found: error
