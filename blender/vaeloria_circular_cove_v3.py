@@ -100,7 +100,7 @@ cam.rotation_euler=(Vector((0,-2,2))-cam.location).to_track_quat('-Z','Y').to_eu
 cam.data.type='ORTHO';cam.data.ortho_scale=222;bpy.context.scene.camera=cam
 bpy.ops.object.light_add(type='AREA',location=(-60,-80,160))
 bpy.context.object.data.energy=2800;bpy.context.object.data.size=130
-scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE'
+scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT'
 scene.render.resolution_x=1440;scene.render.resolution_y=900;scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG'
 scene.render.filepath=str(OUT/'TERRAIN_ONLY_CIRCULAR_COVE_V3.png')
