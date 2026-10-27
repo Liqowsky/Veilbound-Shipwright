@@ -10,6 +10,7 @@
 #include "soh/ResourceManagerHelpers.h"
 #include <string.h>
 #include "veilbound_title_button.h"
+#include "veilbound_rift_generated.h"
 #if defined(__ANDROID__)
 #include <jni.h>
 #include <SDL.h>
@@ -557,6 +558,24 @@ void EnMag_DrawInner(Actor* thisx, PlayState* play, Gfx** gfxP) {
         s32 n;
         if (veilboundFrame < 10000) {
             veilboundFrame++;
+        }
+        // Original sky/rift artwork, native RGBA32 tiles under texture-memory limits.
+        // Each 64x30 source tile is drawn into a 64x40 screen cell.
+        {
+            s32 row, col;
+            Gfx_SetupDL_39Ptr(&gfx);
+            gDPPipeSync(gfx++);
+            gDPSetAlphaCompare(gfx++, G_AC_NONE);
+            gDPSetRenderMode(gfx++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
+            gDPSetCombineLERP(gfx++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0,
+                              0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0);
+            gDPSetPrimColor(gfx++, 0, 0, 255, 255, 255, 255);
+            for (row = 0; row < 6; ++row) {
+                for (col = 0; col < 5; ++col) {
+                    Veilbound_DrawRGBA32Scaled(&gfx, 32 + col * 64, 20 + row * 40,
+                        sVeilboundRiftTiles[row * 5 + col], 64, 30, 64, 40);
+                }
+            }
         }
         // Slow ease-in: the emblem rises from the emerald haze instead of popping in.
         // Fixed-point smoothstep across 84 frames, without frame-dependent randomness.
