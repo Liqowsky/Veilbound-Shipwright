@@ -5,3 +5,5 @@
 2026-10-27: Trigger integrated rift sky tiles + looping Emerald Whispers native Android APK compilation; file-select SDL macro fix included.
 
 2026-10-27: Compile updated file-select touch submenu navigation, ornate save buttons, higher-resolution sky background and preserved Emerald Whispers loop.
+
+2026-10-27: Verify 640x360 native rift tiles generated directly from HD source; prepare proper O2R-based UI resource replacements (not Android view-only skin).
