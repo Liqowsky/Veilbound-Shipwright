@@ -82,6 +82,36 @@ s=s.replace(needle,'    Veilbound_UpdateFileSelectTouch(this, input);\n'+needle,
 needle='void FileChoose_Destroy(GameState* thisx) {\n}'
 if needle not in s:raise SystemExit("Can't find file select destroy")
 s=s.replace(needle,'void FileChoose_Destroy(GameState* thisx) {\n    Veilbound_SetFileSelectTouchUi(0);\n}',1)
+# Native file-menu palette and prompt replacement, following SoH asset/render pipeline.
+# Do not draw the old controller legend; touch UI supplies the actions.
+color_start='    Color_RGB8 helpTextColor = { 100, 255, 255 };'
+if color_start not in s: raise SystemExit("Native palette anchor missing")
+s=s.replace(color_start,color_start+'''
+    // VEILBOUND: native emerald/brass palette shared across naming and saves.
+''',1)
+palette='''    OPEN_DISPS(this->state.gfxCtx);
+
+    this->n64ddFlag = 0;'''
+if palette not in s: raise SystemExit("Native palette end anchor missing")
+s=s.replace(palette,'''    // VEILBOUND: never fall back to the stock blue OoT window colors.
+    this->windowColor[0] = 23;
+    this->windowColor[1] = 74;
+    this->windowColor[2] = 53;
+    this->highlightColor[0] = 219;
+    this->highlightColor[1] = 171;
+    this->highlightColor[2] = 88;
+    sWindowContentColors[0][0] = 23;
+    sWindowContentColors[0][1] = 74;
+    sWindowContentColors[0][2] = 53;
+    OPEN_DISPS(this->state.gfxCtx);
+
+    this->n64ddFlag = 0;''',1)
+legend='''    if ((this->configMode <= CM_NAME_ENTRY_TO_MAIN) || (this->configMode >= CM_UNUSED_DELAY)) {
+        Gfx_SetupDL_39Opa(this->state.gfxCtx);'''
+if legend not in s: raise SystemExit("Native legacy controls legend anchor missing")
+s=s.replace(legend,'''    if (0 && ((this->configMode <= CM_NAME_ENTRY_TO_MAIN) || (this->configMode >= CM_UNUSED_DELAY))) {
+        Gfx_SetupDL_39Opa(this->state.gfxCtx);''',1)
+
 native.write_text(s)
 
 needle='    private volatile boolean veilboundTitleActive = false;'
