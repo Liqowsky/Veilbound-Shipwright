@@ -3,3 +3,5 @@
 2026-10-27: Test native Android START double-blink and Pillow generator compatibility; builds through VEILBOUND Android APK (experimental). Background image animation pending native resource packaging.
 
 2026-10-27: Trigger integrated rift sky tiles + looping Emerald Whispers native Android APK compilation; file-select SDL macro fix included.
+
+2026-10-27: Compile updated file-select touch submenu navigation, ornate save buttons, higher-resolution sky background and preserved Emerald Whispers loop.
