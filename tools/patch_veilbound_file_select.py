@@ -21,6 +21,10 @@ bridge=r'''
 #if defined(__ANDROID__)
 #include <jni.h>
 #include <SDL.h>
+// SDL_main.h rewrites the identifier 'main'; GameState has a real 'main' field.
+#ifdef main
+#undef main
+#endif
 
 static int sVeilboundFileMenuUi = -1;
 
