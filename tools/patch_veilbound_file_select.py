@@ -57,7 +57,7 @@ static void Veilbound_SetFileSelectTouchUi(int enabled) {
 }
 static void Veilbound_UpdateFileSelectTouch(FileChooseContext* this, Input* input) {
     int isMainMenu = (this->menuMode == FS_MENU_MODE_CONFIG && this->configMode == CM_MAIN_MENU);
-    Veilbound_SetFileSelectTouchUi(isMainMenu);
+    Veilbound_SetFileSelectTouchUi(1); // touch-only controls remain available in every file-select submenu
     if (isMainMenu) {
         int selection = Veilbound_CallFileSelectJava("consumeVeilboundFileSelection", "()I", 0);
         if (selection >= FS_BTN_MAIN_FILE_1 && selection <= FS_BTN_MAIN_OPTIONS) {
@@ -89,6 +89,7 @@ j=j.replace(needle,needle+'''
     private volatile boolean veilboundFileSelectActive = false;
     private int veilboundRequestedFileSlot = -1;
     private LinearLayout veilboundFileSelectPanel;
+    private LinearLayout veilboundNavPanel;
 
     public synchronized int consumeVeilboundFileSelection() {
         int requested = veilboundRequestedFileSlot;
@@ -125,7 +126,9 @@ j=j.replace(needle,needle+'''
         title.setText("VEILBOUND  ·  SAVES");
         title.setGravity(Gravity.CENTER);
         title.setTextColor(0xFFF4D9A0);
-        title.setTextSize(16);
+        title.setTextSize(20);
+        title.setTypeface(android.graphics.Typeface.create("serif", android.graphics.Typeface.BOLD));
+        title.setLetterSpacing(0.1f);
         title.setPadding(0,0,0,dpToPixels(5));
         menu.addView(title);
         String[] labels = {"SAVE 1", "SAVE 2", "SAVE 3", "OPTIONS"};
@@ -136,14 +139,16 @@ j=j.replace(needle,needle+'''
             final int slot=slots[i];
             Button button=new Button(this);
             button.setText(labels[i]);
-            button.setTextSize(16);
+            button.setTextSize(20);
+            button.setTypeface(android.graphics.Typeface.create("serif", android.graphics.Typeface.BOLD));
+            button.setLetterSpacing(0.1f);
             button.setAllCaps(false);
             button.setTextColor(0xFFFFDB93);
             android.graphics.drawable.GradientDrawable bg =
                 new android.graphics.drawable.GradientDrawable();
             bg.setColor(0xFF103F38);
             bg.setCornerRadius(dpToPixels(8));
-            bg.setStroke(dpToPixels(1), 0xFFAF8654);
+            bg.setStroke(dpToPixels(2), 0xFFC49A59);
             button.setBackground(bg);
             button.setOnClickListener(v -> requestVeilboundFileSelection(slot));
             LinearLayout.LayoutParams row = new LinearLayout.LayoutParams(
@@ -158,6 +163,41 @@ j=j.replace(needle,needle+'''
         container.addView(menu, pos);
         menu.setVisibility(View.GONE);
         veilboundFileSelectPanel=menu;
+        // Touch-friendly native navigation for naming, copy, erase and options.
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        String[] captions = {"UP", "DOWN", "LEFT", "RIGHT", "OK", "BACK"};
+        int[] keyCodes = {ControllerButtons.BUTTON_DUP, ControllerButtons.BUTTON_DDOWN,
+            ControllerButtons.BUTTON_DLEFT, ControllerButtons.BUTTON_DRIGHT,
+            ControllerButtons.BUTTON_A, ControllerButtons.BUTTON_B};
+        for (int k=0;k<captions.length;k++) {
+            final int key=keyCodes[k];
+            Button keyButton=new Button(this);
+            keyButton.setText(captions[k]);
+            keyButton.setTextColor(0xFFF5D59D);
+            keyButton.setTextSize(11);
+            keyButton.setAllCaps(false);
+            android.graphics.drawable.GradientDrawable brass=new android.graphics.drawable.GradientDrawable();
+            brass.setColor(0xFF103F38);
+            brass.setStroke(dpToPixels(1),0xFFC49A59);
+            brass.setCornerRadius(dpToPixels(8));
+            keyButton.setBackground(brass);
+            keyButton.setOnTouchListener((v,event) -> {
+                int action=event.getActionMasked();
+                if(action==MotionEvent.ACTION_DOWN) setButton(key,true);
+                if(action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL) setButton(key,false);
+                return true;
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dpToPixels(48),1);
+            lp.setMargins(dpToPixels(2),0,dpToPixels(2),0);
+            nav.addView(keyButton,lp);
+        }
+        FrameLayout.LayoutParams navPos = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+        navPos.bottomMargin=dpToPixels(8);
+        container.addView(nav,navPos);
+        nav.setVisibility(View.GONE);
+        veilboundNavPanel=nav;
     }
 ''',1)
 needle='        boolean touchControlsDisabled = preferences.getBoolean(PREF_TOUCH_CONTROLS_DISABLED, false);'
@@ -166,9 +206,11 @@ j=j.replace(needle,'''        if (veilboundFileSelectActive) {
             veilboundBuildFileSelectPanel();
             overlayView.setVisibility(View.GONE);
             veilboundFileSelectPanel.setVisibility(View.VISIBLE);
+            if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(View.VISIBLE);
             return;
         }
         if (veilboundFileSelectPanel != null) veilboundFileSelectPanel.setVisibility(View.GONE);
+        if (veilboundNavPanel != null) veilboundNavPanel.setVisibility(View.GONE);
         boolean touchControlsDisabled = preferences.getBoolean(PREF_TOUCH_CONTROLS_DISABLED, false);''',1)
 java.write_text(j)
 print("Applied native Save 1/2/3/Options taps and Veilbound-themed large Android file menu")
