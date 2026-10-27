@@ -118,9 +118,10 @@ if __name__=="__main__":
         raise SystemExit("Missing actual generated PRESS START art")
     b=Image.open(io.BytesIO(base64.b64decode(source.read_text().strip()))).convert("RGBA")
     assert b.size==(144,36), "Wrong PRESS START dimensions"
-    b.resize((1152,288),Image.Resampling.LANCZOS).save(dest/"VEILBOUND_press_start_generated_preview.png")
+    resample = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+    b.resize((1152,288),resample).save(dest/"VEILBOUND_press_start_generated_preview.png")
     mist_img=mist()
-    mist_img.resize((512,512),Image.Resampling.LANCZOS).save(dest/"VEILBOUND_emerald_mist_512.png")
+    mist_img.resize((512,512),resample).save(dest/"VEILBOUND_emerald_mist_512.png")
     b.save(dest/"VEILBOUND_button_native_preview.png")
     write_header(Path(opts.header),b,mist_img)
     print("Generated source 3840x2160, native RGBA32 button 144x36, and alpha-smoke 32x32:",opts.header)
